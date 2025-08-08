@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Insurance Assistant Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f7fafc;
+        }
+        
+        .hero-gradient {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+        
+        .input-focus:focus {
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+        }
+        
+        .tab-active {
+            border-bottom: 3px solid #3b82f6;
+            color: #3b82f6;
+        }
+
+        /* Loading spinner animation */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .animate-spin {
+            animation: spin 1.5s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="hero-gradient text-white py-6 shadow-lg">
+            <div class="container mx-auto px-4">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-4">
+                        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/9a63029e-49cd-4ce6-afb3-2531ed4bb6c3.png" alt="Shield icon with blue gradient background representing health insurance protection" class="w-12 h-12 rounded-full">
+                        <h1 class="text-2xl font-bold">HealthInsure AI</h1>
+                    </div>
+                    <nav class="hidden md:flex space-x-6">
+                        <a href="#" class="hover:text-blue-200 transition-all">Home</a>
+                        <a href="#" class="hover:text-blue-200 transition-all">Policies</a>
+                        <a href="#" class="hover:text-blue-200 transition-all">Claims</a>
+                        <a href="#" class="hover:text-blue-200 transition-all">FAQs</a>
+                    </nav>
+                    <button class="md:hidden text-xl">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-grow container mx-auto px-4 py-8">
+            <div class="max-w-6xl mx-auto">
+                <!-- Hero Section -->
+                <section class="mb-12 text-center">
+                    <h2 class="text-4xl font-bold text-gray-800 mb-4">Your Health Insurance AI Assistant</h2>
+                    <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                        Get instant answers about your policy, check claim eligibility, upload documents, 
+                        and more with our AI-powered health insurance assistant.
+                    </p>
+                </section>
+
+                <!-- Tabs Navigation -->
+                <div class="flex border-b border-gray-200 mb-8 overflow-x-auto">
+                    <button class="tab-button px-6 py-3 font-medium text-gray-500 hover:text-blue-600 transition-all tab-active" data-tab="query">
+                        <i class="fas fa-comment-dots mr-2"></i>Ask a Question
+                    </button>
+                    <button class="tab-button px-6 py-3 font-medium text-gray-500 hover:text-blue-600 transition-all" data-tab="document">
+                        <i class="fas fa-file-upload mr-2"></i>Upload Documents
+                    </button>
+                    <button class="tab-button px-6 py-3 font-medium text-gray-500 hover:text-blue-600 transition-all" data-tab="claim">
+                        <i class="fas fa-file-invoice-dollar mr-2"></i>Claim Assistance
+                    </button>
+                    <button class="tab-button px-6 py-3 font-medium text-gray-500 hover:text-blue-600 transition-all" data-tab="recommend">
+                        <i class="fas fa-heartbeat mr-2"></i>Policy Recommendations
+                    </button>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="tab-content">
+                    <!-- Query Tab -->
+                    <div id="query-tab" class="tab-panel active">
+                        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Ask About Your Policy</h3>
+                            <div class="space-y-6">
+                                <div>
+                                    <label for="user-question" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Type your question in natural language
+                                    </label>
+                                    <textarea id="user-question" rows="4" 
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent input-focus"
+                                        placeholder="e.g., Is maternity covered?, How to claim cashless?, Explain my policy in simple terms..." required></textarea>
+                                    <p id="question-error" class="text-red-500 text-sm mt-1 hidden">Please enter your question</p>
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label for="policy-date" class="block text-sm font-medium text-gray-700 mb-2">
+                                            Policy Date Coverage (Optional)
+                                        </label>
+                                        <select id="policy-date" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent input-focus">
+                                            <option value="">Select time period</option>
+                                            <option value="current">Current active coverage</option>
+                                            <option value="waiting">Waiting period</option>
+                                            <option value="start">Policy start date</option>
+                                            <option value="end">Policy end date</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="user-info" class="block text-sm font-medium text-gray-700 mb-2">
+                                            User Context (Optional)
+                                        </label>
+                                        <input type="text" id="user-info" 
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent input-focus"
+                                            placeholder="e.g., Age 35, diabetic, pre-existing condition">
+                                    </div>
+                                </div>
+                                
+                                <button id="submit-question" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-all flex items-center justify-center">
+                                    <span id="question-btn-text">Get Answer</span>
+                                    <i id="question-spinner" class="fas fa-spinner animate-spin ml-2 hidden"></i>
+                                    <i id="question-arrow" class="fas fa-arrow-right ml-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Answer Display Area -->
+                        <div id="answer-container" class="bg-white rounded-lg shadow-md p-6 mb-8 hidden">
+                            <h3 class="text-2xl font-semibold text-gray-800 mb-4">AI Response</h3>
+                            <div id="answer-content" class="prose max-w-none">
+                                <!-- Answer will be inserted here -->
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-gray-200 flex justify-end">
+                                <button id="copy-answer" class="text-blue-600 hover:text-blue-800 flex items-center">
+                                    <i class="fas fa-copy mr-2"></i> Copy Answer
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-green-50 border-l-4 border-green-500 p-4 mb-8 rounded">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-lightbulb text-green-500 mt-1"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-green-700">
+                                        <strong>Tip:</strong> You can ask complex questions like "Does my plan cover hospitalization for dengue with a 10% co-pay at network hospitals?" Our AI understands natural language.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Document Upload Tab -->
+                    <div id="document-tab" class="tab-panel hidden">
+                        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Upload Your Policy Documents</h3>
+                            <div class="space-y-6">
+                                <div id="dropzone" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                                    <div class="flex justify-center mb-4">
+                                        <i class="fas fa-file-pdf text-4xl text-red-500"></i>
+                                    </div>
+                                    <p class="text-gray-600 mb-4">Drag and drop your policy documents here, or click to browse</p>
+                                    <input type="file" id="policy-upload" accept=".pdf" class="hidden">
+                                    <label for="policy-upload" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg cursor-pointer transition-all inline-block">
+                                        Select PDF Files
+                                    </label>
+                                    <p class="text-xs text-gray-500 mt-3">Maximum file size: 10MB</p>
+                                </div>
+                                
+                                <div>
+                                    <h4 class="font-medium text-gray-700 mb-2">Uploaded Documents</h4>
+                                    <div id="uploaded-files" class="space-y-3">
+                                        <div class="text-center py-4 text-gray-500" id="no-documents">
+                                            No documents uploaded yet
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex space-x-4">
+                                    <button id="process-docs" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                        <i id="doc-process-spinner" class="fas fa-spinner animate-spin mr-2 hidden"></i>
+                                        Process Documents
+                                    </button>
+                                    <button id="clear-docs" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-all">
+                                        Clear All
+                                    </button>
+                                </div>
+                                
+                                <div id="processing-result" class="hidden">
+                                    <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                                        <div class="flex">
+                                            <div class="flex-shrink-0">
+                                                <i class="fas fa-check-circle text-green-500 mt-1"></i>
+                                            </div>
+                                            <div class="ml-3">
+                                                <h4 class="text-sm font-medium text-green-700">Documents Processed Successfully</h4>
+                                                
+                                                <!-- Display Gemini Summary -->
+<div id="result-preview" class="mt-4 text-sm text-gray-800"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Claim Assistance Tab -->
+                    <div id="claim-tab" class="tab-panel hidden">
+                        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Claim Assistance</h3>
+                            <div class="space-y-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label for="claim-type" class="block text-sm font-medium text-gray-700 mb-2">
+                                            Type of Claim
+                                        </label>
+                                        <select id="claim-type" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent input-focus" required>
+                                            <option value="">Select claim type</option>
+                                            <option value="hospitalization">Hospitalization</option>
+                                            <option value="opd">Outpatient (OPD)</option>
+                                            <option value="maternity">Maternity</option>
+                                            <option value="dental">Dental</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                        <p id="claim-type-error" class="text-red-500 text-sm mt-1 hidden">Please select claim type</p>
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="expense-description" class="block text-sm font-medium text-gray-700 mb-2">
+                                            Expense Description
+                                        </label>
+                                        <input type="text" id="expense-description" 
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent input-focus"
+                                            placeholder="e.g., Hospitalized for dengue, OPD for dental..." required>
+                                        <p id="expense-error" class="text-red-500 text-sm mt-1 hidden">Please describe the expense</p>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label for="hospital-preference" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Preferred Hospital/City (Optional)
+                                    </label>
+                                    <input type="text" id="hospital-preference" 
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent input-focus"
+                                        placeholder="e.g., Apollo Hospital, Bangalore">
+                                </div>
+                                
+                                <div>
+                                    <label for="bill-upload" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Upload Medical Bills (Optional)
+                                    </label>
+                                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                                        <div class="flex justify-center mb-3">
+                                            <i class="fas fa-file-invoice-dollar text-4xl text-green-500"></i>
+                                        </div>
+                                        <p class="text-gray-600 mb-3">Drag and drop medical bills here (JPG/PDF), or click to browse</p>
+                                        <input type="file" id="bill-upload" accept=".jpg,.jpeg,.pdf" class="hidden">
+                                        <label for="bill-upload" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg cursor-pointer transition-all inline-block">
+                                            Upload Bills
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <button id="check-claim" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-all flex items-center justify-center">
+                                    <span id="claim-btn-text">Check Claim Eligibility</span>
+                                    <i id="claim-spinner" class="fas fa-spinner animate-spin ml-2 hidden"></i>
+                                    <i id="claim-search" class="fas fa-search-dollar ml-2"></i>
+                                </button>
+                            </div>
+                            <div id="claim-error-message" class="text-sm text-red-600 mt-2 hidden"></div>
+                        </div>
+
+                        <!-- Claim Result Display -->
+                        <div id="claim-result" class="bg-white rounded-lg shadow-md p-6 mb-8 hidden">
+                            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Claim Eligibility Result</h3>
+                            <div id="claim-result-content">
+                                <!-- Results will be displayed here -->
+                                 <!-- Place this inside your Claim Assistance panel -->
+                            </div>
+                            
+                        </div>
+                    </div>
+
+                    <!-- Policy Recommendations Tab -->
+                    <div id="recommend-tab" class="tab-panel hidden">
+                        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Get Personalized Policy Recommendations</h3>
+                            <div class="space-y-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label for="user-age" class="block text-sm font-medium text-gray-700 mb-2">
+                                            Age
+                                        </label>
+                                        <input type="number" id="user-age" min="0" max="100" 
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent input-focus"
+                                            placeholder="Your age" required>
+                                        <p id="age-error" class="text-red-500 text-sm mt-1 hidden">Please enter your age</p>
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="user-gender" class="block text-sm font-medium text-gray-700 mb-2">
+                                            Gender
+                                        </label>
+                                        <select id="user-gender" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent input-focus" required>
+                                            <option value="">Select</option>
+                                            <option value="male">Male</option>
+                                            <option value="female">Female</option>
+                                            <option value="other">Other</option>
+                                            <option value="prefer-not">Prefer not to say</option>
+                                        </select>
+                                        <p id="gender-error" class="text-red-500 text-sm mt-1 hidden">Please select gender</p>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label for="health-conditions" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Health Conditions (If any)
+                                    </label>
+                                    <textarea id="health-conditions" rows="3" 
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent input-focus"
+                                        placeholder="e.g., Diabetes, Hypertension, Asthma..."></textarea>
+                                </div>
+                                
+                                <div>
+                                    <label for="coverage-needs" class="block text-sm font-medium text-gray-700 mb-2">
+                                        What coverage is most important to you?
+                                    </label>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                        <label class="flex items-center">
+                                            <input type="checkbox" class="rounded text-blue-600 focus:ring-blue-500" name="coverage" value="hospitalization">
+                                            <span class="ml-2 text-gray-700">Hospitalization</span>
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" class="rounded text-blue-600 focus:ring-blue-500" name="coverage" value="opd">
+                                            <span class="ml-2 text-gray-700">OPD Coverage</span>
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" class="rounded text-blue-600 focus:ring-blue-500" name="coverage" value="maternity">
+                                            <span class="ml-2 text-gray-700">Maternity</span>
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" class="rounded text-blue-600 focus:ring-blue-500" name="coverage" value="dental">
+                                            <span class="ml-2 text-gray-700">Dental/Vision</span>
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" class="rounded text-blue-600 focus:ring-blue-500" name="coverage" value="preventive">
+                                            <span class="ml-2 text-gray-700">Preventive Care</span>
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" class="rounded text-blue-600 focus:ring-blue-500" name="coverage" value="critical">
+                                            <span class="ml-2 text-gray-700">Critical Illness</span>
+                                        </label>
+                                    </div>
+                                    <p id="coverage-error" class="text-red-500 text-sm mt-1 hidden">Please select at least one coverage option</p>
+                                </div>
+                                
+                                <div>
+                                    <label for="budget" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Estimated Annual Budget (₹)
+                                    </label>
+                                    <input type="range" id="budget" min="5000" max="50000" step="1000" value="25000" 
+                                        class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer">
+                                    <div class="flex justify-between mt-1">
+                                        <span class="text-sm text-gray-500">₹5,000</span>
+                                        <span id="budget-value" class="text-sm font-medium text-blue-600">₹25,000</span>
+                                        <span class="text-sm text-gray-500">₹50,000</span>
+                                    </div>
+                                </div>
+                                
+                                <button id="get-recommendations" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-all flex items-center justify-center">
+                                    <span id="recommend-btn-text">Get Recommendations</span>
+                                    <i id="recommend-spinner" class="fas fa-spinner animate-spin ml-2 hidden"></i>
+                                    <i id="recommend-heart" class="fas fa-heartbeat ml-2"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Recommendations Display -->
+                        <div id="recommendations-container" class="bg-white rounded-lg shadow-md p-6 mb-8 hidden">
+                            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Recommended Policies</h3>
+                            <div id="recommendations-content" class="space-y-4">
+                                <!-- Recommendations will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-gray-800 text-white py-8">
+            <div class="container mx-auto px-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">HealthInsure AI</h3>
+                        <p class="text-gray-400">Your intelligent health insurance assistant powered by AI.</p>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+                        <ul class="space-y-2">
+                            <li><a href="#" class="text-gray-400 hover:text-white transition-all">Home</a></li>
+                            <a href="about.html">About Us</a>
+                            <li><a href="#" class="text-gray-400 hover:text-white transition-all">Contact</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white transition-all">Privacy Policy</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">Support</h3>
+                        <ul class="space-y-2">
+                            <li><a href="#" class="text-gray-400 hover:text-white transition-all">FAQs</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white transition-all">Claims Support</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white transition-all">Documentation</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">Contact Us</h3>
+                        <address class="text-gray-400 not-italic">
+                            <p><i class="fas fa-envelope mr-2"></i> support@healthinsureai.com</p>
+                            <p class="mt-2"><i class="fas fa-phone mr-2"></i> +1 (123) 456-7890</p>
+                            <p class="mt-2"><i class="fas fa-map-marker-alt mr-2"></i> 123 Insurance St, Suite 100, San Francisco</p>
+                        </address>
+                    </div>
+                </div>
+                <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
+                    <p>© 2024 HealthInsure AI. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+// ------------------------- TAB SWITCH -------------------------
+document.querySelectorAll('.tab-button').forEach(button => {
+  button.addEventListener('click', () => {
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('tab-active'));
+    document.querySelectorAll('.tab-panel').forEach(panel => {
+      panel.classList.remove('active');
+      panel.classList.add('hidden');
+    });
+    button.classList.add('tab-active');
+    const tabId = button.getAttribute('data-tab');
+    document.getElementById(`${tabId}-tab`).classList.remove('hidden');
+    document.getElementById(`${tabId}-tab`).classList.add('active');
+  });
+});
+
+// ------------------------- BUDGET SLIDER -------------------------
+const budgetSlider = document.getElementById('budget');
+const budgetValue = document.getElementById('budget-value');
+if (budgetSlider && budgetValue) {
+  budgetSlider.addEventListener('input', () => {
+    const value = parseInt(budgetSlider.value).toLocaleString('en-IN');
+    budgetValue.textContent = `₹${value}`;
+  });
+}
+
+// ------------------------- ASK A QUESTION -------------------------
+document.getElementById('submit-question').addEventListener('click', () => {
+  const question = document.getElementById('user-question').value;
+  const policyDate = document.getElementById('policy-date').value;
+  const userInfo = document.getElementById('user-info').value;
+  const spinner = document.getElementById('question-spinner');
+  const btnText = document.getElementById('question-btn-text');
+  const arrowIcon = document.getElementById('question-arrow');
+
+  if (!question.trim()) {
+    document.getElementById('question-error').classList.remove('hidden');
+    return;
+  } else {
+    document.getElementById('question-error').classList.add('hidden');
+  }
+
+  spinner.classList.remove('hidden');
+  arrowIcon.classList.add('hidden');
+  btnText.textContent = 'Processing...';
+
+  fetch('http://localhost:8000/ask', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question, policyDate, userInfo })
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log("🔁 Gemini response:", data);
+    spinner.classList.add('hidden');
+    arrowIcon.classList.remove('hidden');
+    btnText.textContent = 'Get Answer';
+    document.getElementById('answer-container').classList.remove('hidden');
+    document.getElementById('answer-content').innerHTML = `<p>${data.answer}</p>`;
+   
+  })
+  .catch(err => {
+    console.error("❌ Error fetching AI response:", err);
+    spinner.classList.add('hidden');
+    arrowIcon.classList.remove('hidden');
+    btnText.textContent = 'Get Answer';
+    alert('Error getting answer from backend.');
+  });
+});
+
+// ------------------------- PDF UPLOAD -------------------------
+const fileInput = document.getElementById('policy-upload');
+const processBtn = document.getElementById('process-docs');
+const uploadedFiles = document.getElementById('uploaded-files');
+const noDocsText = document.getElementById('no-documents');
+const resultBox = document.getElementById('processing-result');
+const spinner = document.getElementById('doc-process-spinner');
+
+let selectedFile = null;
+
+fileInput.addEventListener('change', (event) => {
+  const file = event.target.files[0];
+  if (file && file.type === "application/pdf") {
+    selectedFile = file;
+    noDocsText.classList.add("hidden");
+    uploadedFiles.innerHTML = `<p class="text-gray-700 font-medium">${file.name}</p>`;
+    processBtn.disabled = false;
+  } else {
+    alert("Please select a valid PDF file.");
+  }
+});
+
+processBtn.addEventListener('click', () => {
+  if (!selectedFile) return;
+
+  spinner.classList.remove("hidden");
+  const formData = new FormData();
+  formData.append("file", selectedFile);
+
+  fetch("http://localhost:8000/upload-doc", {
+    method: "POST",
+    body: formData
+  })
+    .then(res => res.json())
+    .then(data => {
+      spinner.classList.add("hidden");
+      resultBox.classList.remove("hidden");
+
+      if (data.status === "success") {
+        const summaryText = data.summary || "No summary returned from AI.";
+        const previewElement = document.getElementById("result-preview");
+        previewElement.innerHTML = `
+          <h4 class="text-lg font-semibold mb-2 text-gray-700">AI Summary Of You Document</h4>
+          <p class="text-gray-800 leading-relaxed">${summaryText}</p>
+          <p class="mt-4 text-sm text-blue-600">✅ Your policy was successfully processed. You can now ask detailed questions in the "Ask a Question" tab.</p>
+        `;
+      } else {
+        alert("❌ Error from AI: " + data.message);
+      }
+    })
+    .catch(err => {
+      spinner.classList.add("hidden");
+      alert("❌ Upload failed: " + err);
+    });
+});
+// ------------------------- CLEAR DOCUMENTS -------------------------
+const clearBtn = document.getElementById('clear-docs');
+
+clearBtn.addEventListener('click', () => {
+  selectedFile = null;
+  fileInput.value = null;
+  uploadedFiles.innerHTML = `
+    <div class="text-center py-4 text-gray-500" id="no-documents">
+      No documents uploaded yet
+    </div>`;
+  processBtn.disabled = true;
+  resultBox.classList.add("hidden");
+  document.getElementById("result-preview").innerHTML = ""; // optional: clears summary if using #result-preview
+});
+
+// ------------------------- CLAIM ASSISTANCE -------------------------
+const checkClaimBtn = document.getElementById("check-claim");
+  const claimSpinner = document.getElementById("claim-spinner");
+  const claimBtnText = document.getElementById("claim-btn-text");
+  const claimResult = document.getElementById("claim-result");
+  const claimResultContent = document.getElementById("claim-result-content");
+  const claimErrorMessage = document.getElementById("claim-error-message");
+
+  checkClaimBtn.addEventListener("click", () => {
+    const claimType = document.getElementById("claim-type").value;
+    const expenseDescription = document.getElementById("expense-description").value;
+    const hospitalPreference = document.getElementById("hospital-preference").value;
+    const billFile = document.getElementById("bill-upload").files[0];
+
+    // Reset display areas
+    claimResult.classList.add("hidden");
+    claimResultContent.innerHTML = "";
+    claimErrorMessage.classList.add("hidden");
+    claimErrorMessage.textContent = "";
+
+    // Input validation
+    const typeError = document.getElementById("claim-type-error");
+    const expenseError = document.getElementById("expense-error");
+    typeError.classList.add("hidden");
+    expenseError.classList.add("hidden");
+
+    if (!claimType) {
+      typeError.classList.remove("hidden");
+      return;
+    }
+    if (!expenseDescription) {
+      expenseError.classList.remove("hidden");
+      return;
+    }
+
+    // Build form data
+    const formData = new FormData();
+    formData.append("claim_type", claimType);
+    formData.append("expense_description", expenseDescription);
+    if (hospitalPreference) formData.append("hospital_preference", hospitalPreference);
+    if (billFile) formData.append("bill", billFile);
+
+    // Show spinner
+    claimSpinner.classList.remove("hidden");
+    claimBtnText.textContent = "Checking...";
+
+    fetch("http://localhost:8000/check-claim", {
+      method: "POST",
+      body: formData
+    })
+      .then(res => res.json())
+      .then(data => {
+        claimSpinner.classList.add("hidden");
+        claimBtnText.textContent = "Check Claim Eligibility";
+
+        if (data.status === "success") {
+          claimResult.classList.remove("hidden");
+          claimResultContent.innerHTML = `<p class="text-gray-800 whitespace-pre-line">${data.result}</p>`;
+        } else {
+          claimErrorMessage.textContent = `❌ ${data.message}`;
+          claimErrorMessage.classList.remove("hidden");
+        }
+      })
+      .catch(error => {
+        console.error("❌ Network error:", error);
+        claimSpinner.classList.add("hidden");
+        claimBtnText.textContent = "Check Claim Eligibility";
+        claimErrorMessage.textContent = "❌ Network error: " + error.message;
+        claimErrorMessage.classList.remove("hidden");
+      });
+  });
+
+// ------------------------- POLICY RECOMMENDATIONS -------------------------
+const recommendBtn = document.getElementById("get-recommendations");
+  const recommendSpinner = document.getElementById("recommend-spinner");
+  const recommendBtnText = document.getElementById("recommend-btn-text");
+  const recommendContainer = document.getElementById("recommendations-container");
+  const recommendContent = document.getElementById("recommendations-content");
+  
+
+  // Live update budget value display
+  budgetSlider.addEventListener("input", () => {
+    budgetValue.textContent = `₹${parseInt(budgetSlider.value).toLocaleString("en-IN")}`;
+  });
+
+  recommendBtn.addEventListener("click", () => {
+    const age = document.getElementById("user-age").value.trim();
+    const gender = document.getElementById("user-gender").value.trim();
+    const conditions = document.getElementById("health-conditions").value.trim();
+    const budget = budgetSlider.value;
+
+    // Get all selected coverages
+    const selectedCoverages = Array.from(document.querySelectorAll("input[name='coverage']:checked"))
+      .map(cb => cb.value)
+      .join(", ");
+
+    // Validation
+    const ageError = document.getElementById("age-error");
+    const genderError = document.getElementById("gender-error");
+    const coverageError = document.getElementById("coverage-error");
+    ageError.classList.add("hidden");
+    genderError.classList.add("hidden");
+    coverageError.classList.add("hidden");
+
+    let hasError = false;
+    if (!age) {
+      ageError.classList.remove("hidden");
+      hasError = true;
+    }
+    if (!gender) {
+      genderError.classList.remove("hidden");
+      hasError = true;
+    }
+    if (!selectedCoverages) {
+      coverageError.classList.remove("hidden");
+      hasError = true;
+    }
+    if (hasError) return;
+
+    // Show spinner
+    recommendSpinner.classList.remove("hidden");
+    recommendBtnText.textContent = "Getting...";
+
+    // Prepare form data
+    const formData = new FormData();
+    formData.append("user_age", age);
+    formData.append("user_gender", gender);
+    formData.append("health_conditions", conditions || "None");
+    formData.append("coverage", selectedCoverages);
+    formData.append("budget", budget);
+
+    fetch("http://localhost:8000/recommend-policy", {
+      method: "POST",
+      body: formData,
+    })
+      .then(res => res.json())
+      .then(data => {
+        recommendSpinner.classList.add("hidden");
+        recommendBtnText.textContent = "Get Recommendations";
+
+        if (data.status === "success") {
+          recommendContainer.classList.remove("hidden");
+          recommendContent.innerHTML = `<p class="whitespace-pre-line text-gray-800">${data.recommendations}</p>`;
+        } else {
+          recommendContainer.classList.remove("hidden");
+          recommendContent.innerHTML = `<p class="text-red-600">❌ Error: ${data.message}</p>`;
+        }
+      })
+      .catch(err => {
+        console.error("❌ Recommendation error:", err);
+        recommendSpinner.classList.add("hidden");
+        recommendBtnText.textContent = "Get Recommendations";
+        recommendContainer.classList.remove("hidden");
+        recommendContent.innerHTML = `<p class="text-red-600">❌ Failed to get recommendations. Please try again later.</p>`;
+      });
+  });
+  
+</script>
+
+</body>
+</html>

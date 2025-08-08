@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Project Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Custom styles */
+        .sidebar {
+            transition: all 0.3s;
+        }
+        .sidebar-collapsed {
+            width: 70px;
+        }
+        .sidebar-expanded {
+            width: 250px;
+        }
+        .main-content {
+            transition: margin-left 0.3s;
+        }
+        .status-badge {
+            @apply px-2 py-1 rounded-full text-xs font-semibold;
+        }
+        .status-not-started {
+            @apply bg-gray-200 text-gray-800;
+        }
+        .status-in-progress {
+            @apply bg-blue-200 text-blue-800;
+        }
+        .status-submitted {
+            @apply bg-purple-200 text-purple-800;
+        }
+        .status-approved {
+            @apply bg-green-200 text-green-800;
+        }
+        .status-needs-revision {
+            @apply bg-yellow-200 text-yellow-800;
+        }
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+        }
+        .file-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .tab-active {
+            @apply border-b-2 border-blue-500 text-blue-600;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar sidebar-expanded bg-gray-900 text-white flex flex-col">
+        <div class="p-4 flex items-center justify-between border-b border-gray-700">
+            <h1 class="text-xl font-bold whitespace-nowrap">ProjectHub</h1>
+            <button id="toggle-sidebar" class="text-gray-400 hover:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </div>
+        <div class="p-4 flex-1 overflow-y-auto">
+            <div class="space-y-2">
+                <a href="#dashboard" class="flex items-center space-x-3 p-2 rounded-lg bg-gray-800 text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                    </svg>
+                    <span class="whitespace-nowrap">Dashboard</span>
+                </a>
+                <a href="#projects" class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="whitespace-nowrap">Projects</span>
+                </a>
+                <a href="#reviews" class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="whitespace-nowrap">Reviews</span>
+                </a>
+                <a href="#documents" class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="whitespace-nowrap">Documents</span>
+                </a>
+                <a href="#students" class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v1h-3zM4.75 12.094A5.973 5.973 0 004 15v1H1v-1a3 3 0 013.75-2.906z" />
+                    </svg>
+                    <span class="whitespace-nowrap">Students</span>
+                </a>
+                <a href="#faculty" class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="whitespace-nowrap">Faculty</span>
+                </a>
+            </div>
+        </div>
+        <div class="p-4 border-t border-gray-700">
+            <div class="flex items-center space-x-3">
+                <img src="https://placehold.co/40x40" alt="User profile picture of current logged in user" class="rounded-full">
+                <div>
+                    <p class="text-sm font-medium">John Doe</p>
+                    <p class="text-xs text-gray-400">Admin</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="main-content" class="main-content flex-1 flex flex-col overflow-hidden">
+        <!-- Top Navigation -->
+        <header class="bg-white shadow-sm z-10">
+            <div class="px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <h1 id="page-title" class="text-xl font-semibold">Dashboard</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="p-2 rounded-full hover:bg-gray-100 relative">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                        </svg>
+                        <span class="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500"></span>
+                    </button>
+                    <div class="relative">
+                        <button id="user-menu-button" class="flex items-center space-x-2">
+                            <span class="text-sm font-medium">John Doe</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Your Profile</a>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign out</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <main class="flex-1 overflow-y-auto p-4">
+            <!-- Dashboard Section -->
+            <section id="dashboard-section" class="space-y-6">
+                <!-- Dashboard Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Total Projects</p>
+                                <h3 class="text-2xl font-bold">32</h3>
+                            </div>
+                            <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Ongoing</p>
+                                <h3 class="text-2xl font-bold">18</h3>
+                            </div>
+                            <div class="p-3 rounded-full bg-green-100 text-green-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Completed</p>
+                                <h3 class="text-2xl font-bold">8</h3>
+                            </div>
+                            <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Pending Approval</p>
+                                <h3 class="text-2xl font-bold">6</h3>
+                            </div>
+                            <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <h3 class="font-semibold mb-4">Project Status Distribution</h3>
+                        <canvas id="statusChart" height="200"></canvas>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <h3 class="font-semibold mb-4">Projects by Department</h3>
+                        <canvas id="departmentChart" height="200"></canvas>
+                    </div>
+                </div>
+
+                <!-- Upcoming Deadlines -->
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-semibold">Upcoming Deadlines</h3>
+                        <a href="#" class="text-sm text-blue-600 hover:underline">View All</a>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-3 border-b border-gray-100 hover:bg-gray-50">
+                            <div>
+                                <p class="font-medium">Machine Learning Research</p>
+                                <p class="text-sm text-gray-500">Due in 3 days</p>
+                            </div>
+                            <span class="status-badge status-in-progress">In Progress</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 border-b border-gray-100 hover:bg-gray-50">
+                            <div>
+                                <p class="font-medium">IoT Security System</p>
+                                <p class="text-sm text-gray-500">Due in 1 week</p>
+                            </div>
+                            <span class="status-badge status-submitted">Submitted</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 border-b border-gray-100 hover:bg-gray-50">
+                            <div>
+                                <p class="font-medium">Blockchain Implementation</p>
+                                <p class="text-sm text-gray-500">Due in 10 days</p>
+                            </div>
+                            <span class="status-badge status-not-started">Not Started</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Projects Section (Hidden by default) -->
+            <section id="projects-section" class="hidden space-y-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-semibold">All Projects</h2>
+                    <button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        <span>New Project</span>
+                    </button>
+                </div>
+
+                <!-- Filters -->
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                            <select class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option>All Departments</option>
+                                <option>Computer Science</option>
+                                <option>Electrical Engineering</option>
+                                <option>Mechanical Engineering</option>
+                                <option>Civil Engineering</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                            <select class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option>All Years</option>
+                                <option>2023</option>
+                                <option>2022</option>
+                                <option>2021</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                            <select class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option>All Statuses</option>
+                                <option>Not Started</option>
+                                <option>In Progress</option>
+                                <option>Submitted</option>
+                                <option>Approved</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end">
+                            <button class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Apply Filters</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Projects Table -->
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project Title</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Students</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supervisor</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submission Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="font-medium text-gray-900">Machine Learning for Healthcare</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex -space-x-1">
+                                            <img src="https://placehold.co/24x24" alt="Student profile picture of student John Smith" class="w-6 h-6 rounded-full border-2 border-white">
+                                            <img src="https://placehold.co/24x24" alt="Student profile picture of student Sarah Johnson" class="w-6 h-6 rounded-full border-2 border-white">
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Computer Science</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="status-badge status-in-progress">In Progress</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Dr. Robert Chen</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2023-11-15</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <a href="#" class="text-blue-600 hover:text-blue-900">View</a>
+                                        <a href="#" class="text-gray-600 hover:text-gray-900 ml-3">Edit</a>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="font-medium text-gray-900">IoT Security Framework</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex -space-x-1">
+                                            <img src="https://placehold.co/24x24" alt="Student profile picture of student Michael Brown" class="w-6 h-6 rounded-full border-2 border-white">
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Electrical Engineering</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="status-badge status-submitted">Submitted</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Dr. Lisa Wong</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2023-10-20</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <a href="#" class="text-blue-600 hover:text-blue-900">View</a>
+                                        <a href="#" class="text-gray-600 hover:text-gray-900 ml-3">Edit</a>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="font-medium text-gray-900">Renewable Energy Monitoring</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex -space-x-1">
+                                            <img src="https://placehold.co/24x24" alt="Student profile picture of student Emma Davis" class="w-6 h-6 rounded-full border-2 border-white">
+                                            <img src="https://placehold.co/24x24" alt="Student profile picture of student David Wilson" class="w-6 h-6 rounded-full border-2 border-white">
+                                            <img src="https://placehold.co/24x24" alt="Student profile picture of student Olivia Martin" class="w-6 h-6 rounded-full border-2 border-white">
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Mechanical Engineering</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="status-badge status-approved">Approved</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Dr. James Lee</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2023-09-05</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <a href="#" class="text-blue-600 hover:text-blue-900">View</a>
+                                        <a href="#" class="text-gray-600 hover:text-gray-900 ml-3">Edit</a>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="font-medium text-gray-900">Blockchain for Supply Chain</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex -space-x-1">
+                                            <img src="https://placehold.co/24x24" alt="Student profile picture of student Daniel Garcia" class="w-6 h-6 rounded-full border-2 border-white">
+                                            <img src="https://placehold.co/24x24" alt="Student profile picture of student Sophia Rodriguez" class="w-6 h-6 rounded-full border-2 border-white">
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Computer Science</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="status-badge status-needs-revision">Needs Revision</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Dr. Patricia Kim</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2023-11-01</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <a href="#" class="text-blue-600 hover:text-blue-900">View</a>
+                                        <a href="#" class="text-gray-600 hover:text-gray-900 ml-3">Edit</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                        <div class="text-sm text-gray-700">
+                            Showing <span class="font-medium">1</span> to <span class="font-medium">4</span> of <span class="font-medium">12</span> projects
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Previous</button>
+                            <button class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">1</button>
+                            <button class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">2</button>
+                            <button class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">3</button>
+                            <button class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Project Detail Section (Hidden by default) -->
+            <section id="project-detail-section" class="hidden space-y-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <button id="back-to-projects" class="p-2 rounded-full hover:bg-gray-100">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <h2 class="text-xl font-semibold">Project Detail</h2>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button class="flex items-center space-x-1 px-3 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            <span>Edit</span>
+                        </button>
+                        <button class="flex items-center space-x-1 px-3 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            <span>Upload File</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="p-6">
+                        <div class="md:flex md:items-start md:justify-between md:space-x-8">
+                            <div class="md:w-2/3">
+                                <h3 class="text-2xl font-bold text-gray-900">Machine Learning for Healthcare</h3>
+                                <div class="mt-4 space-y-4">
+                                    <div>
+                                        <p class="text-gray-500 text-sm">Description</p>
+                                        <p class="mt-1 text-gray-700">
+                                            This project aims to develop machine learning models to predict disease progression in diabetes patients using electronic health records. The system will analyze patient history and lab results to provide early warnings about potential complications.
+                                        </p>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <p class="text-gray-500 text-sm">Supervisor</p>
+                                            <p class="mt-1 font-medium text-gray-700">Dr. Robert Chen</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-500 text-sm">Department</p>
+                                            <p class="mt-1 font-medium text-gray-700">Computer Science</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-500 text-sm">Start Date</p>
+                                            <p class="mt-1 font-medium text-gray-700">2023-08-15</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-500 text-sm">Submission Date</p>
+                                            <p class="mt-1 font-medium text-gray-700">2023-11-15</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-6 md:mt-0 md:w-1/3">
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <p class="text-gray-500 text-sm mb-2">Project Status</p>
+                                    <div class="flex items-center justify-between mb-4">
+                                        <span class="status-badge status-in-progress">In Progress</span>
+                                        <p class="text-sm text-gray-500">Due in 3 days</p>
+                                    </div>
+                                    <div class="mb-2 flex items-center justify-between">
+                                        <p class="text-sm text-gray-600">Progress</p>
+                                        <p class="text-sm font-medium">65%</p>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div class="bg-blue-600 h-2.5 rounded-full" style="width: 65%"></div>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <p class="text-gray-500 text-sm mb-2">Team Members</p>
+                                    <div class="space-y-2">
+                                        <div class="flex items-center space-x-3">
+                                            <img src="https://placehold.co/40x40" alt="Student profile picture of student John Smith" class="w-8 h-8 rounded-full">
+                                            <div>
+                                                <p class="text-sm font-medium text-gray-700">John Smith</p>
+                                                <p class="text-xs text-gray-500">CS-2020-001</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center space-x-3">
+                                            <img src="https://placehold.co/40x40" alt="Student profile picture of student Sarah Johnson" class="w-8 h-8 rounded-full">
+                                            <div>
+                                                <p class="text-sm font-medium text-gray-700">Sarah Johnson</p>
+                                                <p class="text-xs text-gray-500">CS-2020-015</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="border-t border-gray-200">
+                        <div class="flex overflow-x-auto">
+                            <button id="documents-tab" class="tab-active px-6 py-4 text-sm font-medium">
+                                Documents
+                            </button>
+                            <button id="tasks-tab" class="px-6 py-4 text-sm font-medium text-gray-500 hover:text-gray-700">
+                                Tasks
+                            </button>
+                            <button id="timeline-tab" class="px-6 py-4 text-sm font-medium text-gray-500 hover:text-gray-700">
+                                Timeline
+                            </button>
+                            <button id="comments-tab" class="px-6 py-4 text-sm font-medium text-gray-500 hover:text-gray-700">
+                                Comments
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tab Panels -->
+                    <div id="documents-panel" class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Document Card -->
+                            <div class="file-card bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200">
+                                <div class="p-4">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="p-2 bg-blue-100 text-blue-600 rounded-md">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-gray-900">Project Proposal</p>
+                                                <p class="text-xs text-gray-500">PDF • 2.4 MB</p>
+                                            </div>
+                                        </div>
+                                        <button class="p-1 rounded-full hover:bg-gray-100">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div class="mt-4 text-sm text-gray-500 flex items-center justify-between">
+                                        <span>Uploaded: 2023-08-20</span>
+                                        <a href="#" class="text-blue-600 hover:underline">Download</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Document Card -->
+                            <div class="file-card bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200">
+                                <div class="p-4">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="p-2 bg-green-100 text-green-600 rounded-md">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-gray-900">Progress Report</p>
+                                                <p class="text-xs text-gray-500">DOCX • 1.2 MB</p>
+                                            </div>
+                                        </div>
+                                        <button class="p-1 rounded-full hover:bg-gray-100">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div class="mt-4 text-sm text-gray-500 flex items-center justify-between">
+                                        <span>Uploaded: 2023-09-15</span>
+                                        <a href="#" class="text-blue-600 hover:underline">Download</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Document Card -->
+                            <div class="file-card bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200">
+                                <div class="p-4">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="p-2 bg-purple-100 text-purple-600 rounded-md">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-gray-900">Dataset</p>
+                                                <p class="text-xs text-gray-500">CSV • 4.8 MB</p>
+                                            </div>
+                                        </div>
+                                        <button class="p-1 rounded-full hover:bg-gray-100">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div class="mt-4 text-sm text-gray-500 flex items-center justify-between">
+                                        <span>Uploaded: 2023-08-22</span>
+                                        <a href="#" class="text-blue-600 hover:underline">Download</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="tasks-panel" class="hidden p-6">
+                        <div class="space-y-4">
+                            <div class="p-4 border border-gray-200 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <input type="checkbox" id="task1" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label for="task1" class="font-medium text-gray-700">Literature Review</label>
+                                    </div>
+                                    <span class="text-sm text-gray-500">Completed</span>
+                                </div>
+                            </div>
+                            <div class="p-4 border border-gray-200 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <input type="checkbox" id="task2" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label for="task2" class="font-medium text-gray-700">Data Collection</label>
+                                    </div>
+                                    <span class="text-sm text-gray-500">Completed</span>
+                                </div>
+                            </div>
+                            <div class="p-4 border border-gray-200 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <input type="checkbox" id="task3" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label for="task3" class="font-medium text-gray-700">Model Development</label>
+                                    </div>
+                                    <span class="text-sm text-gray-500">In Progress</span>
+                                </div>
+                            </div>
+                            <div class="p-4 border border-gray-200 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <input type="checkbox" id="task4" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" checked>
+                                        <label for="task4" class="font-medium text-gray-700 line-through">Initial Proposal</label>
+                                    </div>
+                                    <span class="text-sm text-gray-500">Completed</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="timeline-panel" class="hidden p-6">
+                        <div class="flow-root">
+                            <ul class="-mb-8">
+                                <li>
+                                    <div class="relative pb-8">
+                                        <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
+                                        <div class="relative flex space-x-3">
+                                            <div>
+                                                <span class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-8 ring-white">
+                                                    <svg class="h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </span>
+                                            </div>
+                                            <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                                                <div>
+                                                    <p class="text-sm text-gray-500">Project approved by <span class="font-medium text-gray-900">Dr. Robert Chen</span></p>
+                                                </div>
+                                                <div class="text-right text-sm whitespace-nowrap text-gray-500">
+                                                    <time datetime="2023-08-15">Aug 15</time>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="relative pb-8">
+                                        <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
+                                        <div class="relative flex space-x-3">
+                                            <div>
+                                                <span class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-8 ring-white">
+                                                    <svg class="h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </span>
+                                            </div>
+                                            <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                                                <div>
+                                                    <p class="text-sm text-gray-500">Initial proposal submitted</p>
+                                                </div>
+                                                <div class="text-right text-sm whitespace-nowrap text-gray-500">
+                                                    <time datetime="2023-08-20">Aug 20</time>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="relative pb-8">
+                                        <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
+                                        <div class="relative flex space-x-3">
+                                            <div>
+                                                <span class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-8 ring-white">
+                                                    <svg class="h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </span>
+                                            </div>
+                                            <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                                                <div>
+                                                    <p class="text-sm text-gray-500">Dataset collected</p>
+                                                </div>
+                                                <div class="text-right text-sm whitespace-nowrap text-gray-500">
+                                                    <time datetime="2023-09-10">Sep 10</time>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="relative pb-8">
+                                        <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
+                                        <div class="relative flex space-x-3">
+                                            <div>
+                                                <span class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-8 ring-white">
+                                                    <svg class="h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </span>
+                                            </div>
+                                            <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                                                <div>
+                                                    <p class="text-sm text-gray-500">Progress report submitted</p>
+                                                </div>
+                                                <div class="text-right text-sm whitespace-nowrap text-gray-500">
+                                                    <time datetime="2023-09-15">Sep 15</time>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="relative pb-8">
+                                        <div class="relative flex space-x-3">
+                                            <div>
+                                                <span class="h-8 w-8 rounded-full bg-gray-400 flex items-center justify-center ring-8 ring-white">
+                                                    <svg class="h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </span>
+                                            </div>
+                                            <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                                                <div>
+                                                    <p class="text-sm text-gray-500">Final submission due</p>
+                                                </div>
+                                                <div class="text-right text-sm whitespace-nowrap text-gray-500">
+                                                    <time datetime="2023-11-15">Nov 15</time>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div id="comments-panel" class="hidden p-6">
+                        <div class="space-y-4">
+                            <!-- Comment -->
+                            <div class="flex space-x-4">
+                                <img src="https://placehold.co/40x40" alt="User profile picture of supervisor Robert Chen" class="w-10 h-10 rounded-full">
+                                <div class="flex-1">
+                                    <div class="bg-gray-50 p-4 rounded-lg">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <div>
+                                                <p class="font-medium text-gray-900">Dr. Robert Chen</p>
+                                                <p class="text-xs text-gray-500">2023-09-16</p>
+                                            </div>
+                                            <div class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Supervisor</div>
+                                        </div>
+                                        <p class="text-gray-700">
+                                            The progress report looks good. Please focus on improving the model accuracy in the next phase. The current 78% accuracy should be increased to at least 85% to make the results statistically significant.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Comment -->
+                            <div class="flex space-x-4">
+                                <img src="https://placehold.co/40x40" alt="User profile picture of student John Smith" class="w-10 h-10 rounded-full">
+                                <div class="flex-1">
+                                    <div class="bg-gray-50 p-4 rounded-lg">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <div>
+                                                <p class="font-medium text-gray-900">John Smith</p>
+                                                <p class="text-xs text-gray-500">2023-09-16</p>
+                                            </div>
+                                            <div class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Student</div>
+                                        </div>
+                                        <p class="text-gray-700">
+                                            Thank you for the feedback. We'll work on optimizing the hyperparameters and try different feature selection methods to improve the accuracy.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Comment Form -->
+                            <div class="pt-4 border-t border-gray-200">
+                                <form>
+                                    <div class="mb-4">
+                                        <label for="comment" class="sr-only">Comment</label>
+                                        <textarea id="comment" rows="3" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="Add your comment..."></textarea>
+                                    </div>
+                                    <div class="flex justify-end">
+                                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                            Post Comment
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Reviews Section (Hidden by default) -->
+            <section id="reviews-section" class="hidden space-y-6">
+                <h2 class="text-xl font-semibold">Project Reviews</h2>
+                
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Review Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="font-medium text-gray-900">IoT Security Framework</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Electrical Engineering</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2023-10-20</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="status-badge status-submitted">Submitted</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <button class="text-blue-600 hover:text-blue-900">Review</button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="font-medium text-gray-900">Blockchain for Supply Chain</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Computer Science</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2023-11-01</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="status-badge status-needs-revision">Needs Revision</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <button class="text-blue-600 hover:text-blue-900">Review</button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="font-medium text-gray-900">Renewable Energy Monitoring</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Mechanical Engineering</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2023-09-05</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="status-badge status-approved">Approved</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <button class="text-blue-600 hover:text-blue-900">View</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                        <div class="text-sm text-gray-700">
+                            Showing <span class="font-medium">1</span> to <span class="font-medium">3</span> of <span class="font-medium">5</span> reviews
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Previous</button>
+                            <button class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">1</button>
+                            <button class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">2</button>
+                            <button class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Documents Section (Hidden by default) -->
+            <section id="documents-section" class="hidden space-y-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-semibold">Document Management</h2>
+                    <button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <span>Upload New</span>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Document Card -->
+                    <div class="file-card bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200">
+                        <div class="p-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="p-2 bg-blue-100 text-blue-600 rounded-md">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-900">Final Report Template</p>
+                                        <p class="text-xs text-gray-500">DOCX • 1.8 MB</p>
+                                    </div>
+                                </div>
+                                <button class="p-1 rounded-full hover:bg-gray-100">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="mt-4 text-sm text-gray-500 flex items-center justify-between">
+                                <div>
+                                    <span>Uploaded: 2023-08-10</span>
+                                    <p class="text-xs">By: Admin</p>
+                                </div>
+                                <a href="#" class="text-blue-600 hover:underline">Download</a>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Document Card -->
+                    <div class="file-card bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200">
+                        <div class="p-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="p-2 bg-yellow-100 text-yellow-600 rounded-md">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-900">Project Guidelines</p>
+                                        <p class="text-xs text-gray-500">PDF • 2.1 MB</p>
+                                    </div>
+                                </div>
+                                <button class="p-1 rounded-full hover:bg-gray-100">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="mt-4 text-sm text-gray-500 flex items-center justify-between">
+                                <div>
+                                    <span>Uploaded: 2023-08-05</span>
+                                    <p class="text-xs">By: Admin</p>
+                                </div>
+                                <a href="#" class="text-blue-600 hover:underline">Download</a>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Document Card -->
+                    <div class="file-card bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200">
+                        <div class="p-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="p-2 bg-green-100 text-green-600 rounded-md">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-900">Presentation Template</p>
+                                        <p class="text-xs text-gray-500">PPTX • 3.5 MB</p>
+                                    </div>
+                                </div>
+                                <button class="p-1 rounded-full hover:bg-gray-100">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="mt-4 text-sm text-gray-500 flex items-center justify-between">
+                                <div>
+                                    <span>Uploaded: 2023-08-12</span>
+                                    <p class="text-xs">By: Admin</p>
+                                </div>
+                                <a href="#" class="text-blue-600 hover:underline">Download</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Students Section (Hidden by default) -->
+            <section id="students-section" class="hidden space-y-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-semibold">Student Information</h2>
+                    <div class="relative">
+                        <input type="text" placeholder="Search students..." class="pl-8 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-3 top-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center space-x-3">
+                                            <img src="https://placehold.co/40x40" alt="Student profile picture of student John Smith" class="w-8 h-8 rounded-full">
+                                            <div>
+                                                <p class="font-medium text-gray-900">John Smith</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">CS-2020-001</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Computer Science</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2023</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">john.smith@uni.edu</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Machine Learning for Healthcare</td>
+                                </tr>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center space-x-3">
+                                            <img src="https://placehold.co/40x40" alt="Student profile picture of student Sarah Johnson" class="w-8 h-8 rounded-full">
+                                            <div>
+                                                <p class="font-medium text-gray-900">Sarah Johnson</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">CS-2020-015</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Computer Science</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2023</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">sarah.johnson@uni.edu</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Machine Learning for Healthcare</td>
+                                </tr>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center space-x-3">
+                                            <img src="https://placehold.co/40x40" alt="Student profile picture of student Michael Brown" class="w-8 h-8 rounded-full">
+                                            <div>
+                                                <p class="font-medium text-gray-900">Michael Brown</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">EE-2020-002</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Electrical Engineering</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2023</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">michael.brown@uni.edu</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">IoT Security Framework</td>
+                                </tr>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center space-x-3">
+                                            <img src="https://placehold.co/40x40" alt="Student profile picture of student Emma Davis" class="w-8 h-8 rounded-full">
+                                            <div>
+                                                <p class="font-medium text-gray-900">Emma Davis</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">ME-2020-008</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Mechanical Engineering</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2023</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">emma.davis@uni.edu</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Renewable Energy Monitoring</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                        <div class="text-sm text-gray-700">
+                            Showing <span class="font-medium">1</span> to <span class="font-medium">4</span> of <span class="font-medium">24</span> students
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Previous</button>
+                            <button class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">1</button>
+                            <button class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">2</button>
+                            <button class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">3</button>
+                            <button class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Faculty Section (Hidden by default) -->
+            <section id="faculty-section" class="hidden space-y-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-semibold">Faculty Information</h2>
+                    <button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        <span>Add Faculty</span>
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Faculty</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Projects Supervised</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center space-x-3">
+                                            <img src="https://placehold.co/40x40" alt="Faculty profile picture of Dr. Robert Chen" class="w-8 h-8 rounded-full">
+                                            <div>
+                                                <p class="font-medium text-gray-900">Dr. Robert Chen</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Computer Science</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">r.chen@uni.edu</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">12</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="status-badge status-approved">Active</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <a href="#" class="text-blue-600 hover:text-blue-900">View</a>
+                                        <a href="#" class="text-gray-600 hover:text-gray-900 ml-3">Edit</a>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center space-x-3">
+                                            <img src="https://placehold.co/40x40" alt="Faculty profile picture of Dr. Lisa Wong" class="w-8 h-8 rounded-full">
+                                            <div>
+                                                <p class="font-medium text-gray-900">Dr. Lisa Wong</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Electrical Engineering</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">l.wong@uni.edu</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">8</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="status-badge status-approved">Active</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <a href="#" class="text-blue-600 hover:text-blue-900">View</a>
+                                        <a href="#" class="text-gray-600 hover:text-gray-900 ml-3">Edit</a>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center space-x-3">
+                                            <img src="https://placehold.co/40x40" alt="Faculty profile picture of Dr. James Lee" class="w-8 h-8 rounded-full">
+                                            <div>
+                                                <p class="font-medium text-gray-900">Dr. James Lee</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Mechanical Engineering</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">j.lee@uni.edu</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">5</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="status-badge status-approved">Active</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <a href="#" class="text-blue-600 hover:text-blue-900">View</a>
+                                        <a href="#" class="text-gray-600 hover:text-gray-900 ml-3">Edit</a>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center space-x-3">
+                                            <img src="https://placehold.co/40x40" alt="Faculty profile picture of Dr. Patricia Kim" class="w-8 h-8 rounded-full">
+                                            <div>
+                                                <p class="font-medium text-gray-900">Dr. Patricia Kim</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Computer Science</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">p.kim@uni.edu</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">7</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="status-badge status-approved">Active</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <a href="#" class="text-blue-600 hover:text-blue-900">View</a>
+                                        <a href="#" class="text-gray-600 hover:text-gray-900 ml-3">Edit</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                        <div class="text-sm text-gray-700">
+                            Showing <span class="font-medium">1</span> to <span class="font-medium">4</span> of <span class="font-medium">8</span> faculty
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Previous</button>
+                            <button class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">1</button>
+                            <button class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">2</button>
+                            <button class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Toggle sidebar
+        document.getElementById('toggle-sidebar').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('main-content');
+            
+            if (sidebar.classList.contains('sidebar-expanded')) {
+                sidebar.classList.remove('sidebar-expanded');
+                sidebar.classList.add('sidebar-collapsed');
+                mainContent.style.marginLeft = '70px';
+            } else {
+                sidebar.classList.remove('sidebar-collapsed');
+                sidebar.classList.add('sidebar-expanded');
+                mainContent.style.marginLeft = '250px';
+            }
+        });
+
+        // Toggle user menu
+        document.getElementById('user-menu-button').addEventListener('click', function() {
+            const menu = document.getElementById('user-menu');
+            menu.classList.toggle('hidden');
+        });
+
+        // Close user menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const userMenuButton = document.getElementById('user-menu-button');
+            const userMenu = document.getElementById('user-menu');
+            
+            if (userMenuButton && userMenu) {
+                if (!userMenuButton.contains(event.target) && !userMenu.contains(event.target)) {
+                    userMenu.classList.add('hidden');
+                }
+            }
+        });
+
+        // Navigation between sections
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Hide all sections
+                document.querySelectorAll('main > section').forEach(section => {
+                    section.classList.add('hidden');
+                });
+                
+                // Show the selected section
+                const sectionId = this.getAttribute('href').substring(1) + '-section';
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    section.classList.remove('hidden');
+                    
+                    // Update page title
+                    const pageTitle = document.getElementById('page-title');
+                    if (pageTitle) {
+                        pageTitle.textContent = section.querySelector('h2')?.textContent || 'Dashboard';
+                    }
+                }
+            });
+        });
+
+        // Project tabs
+        document.getElementById('documents-tab').addEventListener('click', function() {
+            document.querySelectorAll('#project-detail-section .tab-active').forEach(tab => {
+                tab.classList.remove('tab-active');
+            });
+            this.classList.add('tab-active');
+            
+            document.querySelectorAll('#project-detail-section [id$="panel"]').forEach(panel => {
+                panel.classList.add('hidden');
+            });
+            document.getElementById('documents-panel').classList.remove('hidden');
+        });
+
+        document.getElementById('tasks-tab').addEventListener('click', function() {
+            document.querySelectorAll('#project-detail-section .tab-active').forEach(tab => {
+                tab.classList.remove('tab-active');
+            });
+            this.classList.add('tab-active');
+            
+            document.querySelectorAll('#project-detail-section [id$="panel"]').forEach(panel => {
+                panel.classList.add('hidden');
+            });
+            document.getElementById('tasks-panel').classList.remove('hidden');
+        });
+
+        document.getElementById('timeline-tab').addEventListener('click', function() {
+            document.querySelectorAll('#project-detail-section .tab-active').forEach(tab => {
+                tab.classList.remove('tab-active');
+            });
+            this.classList.add('tab-active');
+            
+            document.querySelectorAll('#project-detail-section [id$="panel"]').forEach(panel => {
+                panel.classList.add('hidden');
+            });
+            document.getElementById('timeline-panel').classList.remove('hidden');
+        });
+
+        document.getElementById('comments-tab').addEventListener('click', function() {
+            document.querySelectorAll('#project-detail-section .tab-active').forEach(tab => {
+                tab.classList.remove('tab-active');
+            });
+            this.classList.add('tab-active');
+            
+            document.querySelectorAll('#project-detail-section [id$="panel"]').forEach(panel => {
+                panel.classList.add('hidden');
+            });
+            document.getElementById('comments-panel').classList.remove('hidden');
+        });
+
+        // Back to projects
+        document.getElementById('back-to-projects').addEventListener('click', function() {
+            document.getElementById('projects-section').classList.remove('hidden');
+            document.getElementById('project-detail-section').classList.add('hidden');
+            document.getElementById('page-title').textContent = 'All Projects';
+        });
+
+        // Initialize charts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Project Status Chart
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            const statusChart = new Chart(statusCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Not Started', 'In Progress', 'Submitted', 'Approved', 'Needs Revision'],
+                    datasets: [{
+                        data: [5, 18, 6, 8, 3],
+                        backgroundColor: [
+                            'rgb(209, 213, 219)',
+                            'rgb(59, 130, 246)',
+                            'rgb(168, 85, 247)',
+                            'rgb(34, 197, 94)',
+                            'rgb(234, 179, 8)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        }
+                    }
+                }
+            });
+
+            // Department Chart
+            const deptCtx = document.getElementById('departmentChart').getContext('2d');
+            const deptChart = new Chart(deptCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Computer Science', 'Electrical Eng.', 'Mechanical Eng.', 'Civil Eng.', 'Chemical Eng.'],
+                    datasets: [{
+                        label: 'Projects',
+                        data: [12, 8, 6, 4, 2],
+                        backgroundColor: 'rgb(59, 130, 246)',
+                        borderColor: 'rgb(59, 130, 246)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        });
+        
+
+        
+const sections = {
+  dashboard: document.getElementById("dashboard-section"),
+  projects: document.getElementById("projects-section"),
+  reviews: document.getElementById("reviews-section"),
+  documents: document.getElementById("documents-section"),
+  students: null, // Can be added
+  faculty: null   // Can be added
+};
+
+function showSection(sectionId) {
+  for (const key in sections) {
+    if (sections[key]) {
+      sections[key].classList.add("hidden");
+    }
+  }
+  const section = sections[sectionId];
+  if (section) section.classList.remove("hidden");
+
+  const title = sectionId.charAt(0).toUpperCase() + sectionId.slice(1);
+  document.getElementById("page-title").textContent = title;
+}
+
+document.querySelectorAll("a[href^='#']").forEach(link => {
+  link.addEventListener("click", function(e) {
+    e.preventDefault();
+    const sectionId = this.getAttribute("href").replace("#", "");
+    showSection(sectionId);
+  });
+});
+
+// Default view
+showSection("dashboard");
+
+    </script>
+</body>
+</html>

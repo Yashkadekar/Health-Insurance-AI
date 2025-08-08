@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College Project Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+        .sidebar.collapsed {
+            width: 70px;
+        }
+        .sidebar.collapsed .menu-text {
+            display: none;
+        }
+        .sidebar.collapsed .logo-text {
+            display: none;
+        }
+        .content-area {
+            transition: all 0.3s ease;
+        }
+        .status-badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div id="sidebar" class="sidebar bg-blue-800 text-white h-full flex flex-col">
+            <div class="p-4 flex items-center justify-between">
+                <div class="flex items-center">
+                    <img src="https://placehold.co/40x40" alt="College logo with shield emblem and blue/gold colors" class="rounded-full">
+                    <span class="logo-text ml-2 text-xl font-bold">CollegeDB</span>
+                </div>
+                <button id="toggleSidebar" class="text-white">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <div class="p-4 py-2 bg-blue-900">
+                <div class="flex items-center">
+                    <img src="https://placehold.co/40x40" alt="Teacher profile picture, professional headshot" class="rounded-full">
+                    <div class="ml-2 menu-text">
+                        <div class="font-medium">Prof. Sarah Johnson</div>
+                        <div class="text-xs opacity-75">Computer Science</div>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="flex-1 mt-4 overflow-y-auto">
+                <a href="#dashboard" class="flex items-center p-3 hover:bg-blue-700 rounded transition menu-item active">
+                    <i class="fas fa-tachometer-alt w-6 text-center"></i>
+                    <span class="menu-text ml-2">Dashboard</span>
+                </a>
+                <a href="#projects" class="flex items-center p-3 hover:bg-blue-700 rounded transition menu-item">
+                    <i class="fas fa-project-diagram w-6 text-center"></i>
+                    <span class="menu-text ml-2">Projects</span>
+                </a>
+                <a href="#calendar" class="flex items-center p-3 hover:bg-blue-700 rounded transition menu-item">
+                    <i class="fas fa-calendar-alt w-6 text-center"></i>
+                    <span class="menu-text ml-2">Calendar</span>
+                </a>
+                <a href="#students" class="flex items-center p-3 hover:bg-blue-700 rounded transition menu-item">
+                    <i class="fas fa-users w-6 text-center"></i>
+                    <span class="menu-text ml-2">Students</span>
+                </a>
+                <a href="#reviews" class="flex items-center p-3 hover:bg-blue-700 rounded transition menu-item">
+                    <i class="fas fa-clipboard-check w-6 text-center"></i>
+                    <span class="menu-text ml-2">Reviews</span>
+                </a>
+                <a href="#notifications" class="flex items-center p-3 hover:bg-blue-700 rounded transition menu-item">
+                    <i class="fas fa-bell w-6 text-center"></i>
+                    <span class="menu-text ml-2">Notifications</span>
+                    <span class="badge bg-red-500 text-white ml-auto rounded-full px-2 text-xs">3</span>
+                </a>
+                <a href="#settings" class="flex items-center p-3 hover:bg-blue-700 rounded transition menu-item">
+                    <i class="fas fa-cog w-6 text-center"></i>
+                    <span class="menu-text ml-2">Settings</span>
+                </a>
+            </nav>
+
+            <div class="p-3">
+                <button class="flex items-center justify-center w-full bg-blue-700 hover:bg-blue-600 p-2 rounded transition">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="menu-text ml-2">Logout</span>
+                </button>
+            </div>
+        </div>
+
+
+        <!-- Main Content -->
+        <div class="content-area flex-1 overflow-y-auto">
+
+            <!-- Edit Project Modal -->
+<div id="editProjectModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-lg p-6 w-full max-w-2xl shadow-lg">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-semibold text-gray-800">Edit Project</h2>
+      <button onclick="closeEditModal()" class="text-gray-500 hover:text-red-500 text-xl">&times;</button>
+    </div>
+
+    <form id="editProjectForm">
+      <input type="hidden" name="rowIndex" />
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Project Title</label>
+          <input type="text" name="title" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Department</label>
+          <select name="department" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+            <option>Computer Science</option>
+            <option>Engineering</option>
+            <option>Mathematics</option>
+            <option>Physics</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Faculty Guide</label>
+          <input type="text" name="faculty" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Status</label>
+          <select name="status" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+            <option>Not Started</option>
+            <option>Ongoing</option>
+            <option>Completed</option>
+            <option>Rejected</option>
+          </select>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700">Team Members</label>
+          <textarea name="team" rows="2" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Submission Date</label>
+          <input type="date" name="submissionDate" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end">
+        <button type="button" onclick="closeEditModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded mr-2">Cancel</button>
+        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">Update Project</button>
+      </div>
+    </form>
+  </div>
+</div>
+            <!-- Top Navigation -->
+            <div class="bg-white shadow p-4 flex justify-between items-center">
+                <h1 class="text-2xl font-bold text-gray-800">Project Dashboard</h1>
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <input type="text" placeholder="Search projects..." class="pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <i class="fas fa-search absolute left-3 top-2.5 text-gray-400"></i>
+                    </div>
+                    <button onclick="openProjectModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full flex items-center">
+                        <i class="fas fa-plus mr-2"></i>
+                        <span>New Project</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div id="main-content" class="p-6">
+                <!-- Dashboard Overview Section -->
+                <section id="dashboard-section">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-semibold text-gray-800">Overview</h2>
+                        <div class="flex space-x-2">
+                            <div class="bg-white rounded-lg shadow p-3 flex flex-col items-center justify-center">
+                                <div class="text-xs text-gray-500 mb-1">Current Semester</div>
+                                <div class="font-bold">Spring 2023</div>
+                            </div>
+                            <div class="bg-white rounded-lg shadow p-3 flex flex-col items-center justify-center">
+                                <div class="text-xs text-gray-500 mb-1">Department</div>
+                                <div class="font-bold">Computer Science</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <!-- Summary Cards -->
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="text-gray-500 text-sm">Total Projects</div>
+                                    <div class="text-3xl font-bold mt-1">42</div>
+                                </div>
+                                <div class="bg-blue-100 p-3 rounded-full text-blue-600">
+                                    <i class="fas fa-project-diagram"></i>
+                                </div>
+                            </div>
+                            <div class="mt-3 text-xs text-gray-500">
+                                <i class="fas fa-arrow-up text-green-500"></i> 5 new this month
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="text-gray-500 text-sm">Ongoing Projects</div>
+                                    <div class="text-3xl font-bold mt-1">23</div>
+                                </div>
+                                <div class="bg-orange-100 p-3 rounded-full text-orange-600">
+                                    <i class="fas fa-tasks"></i>
+                                </div>
+                            </div>
+                            <div class="mt-3 text-xs text-gray-500">
+                                <i class="fas fa-arrow-up text-green-500"></i> 3 completed yesterday
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="text-gray-500 text-sm">Completed Projects</div>
+                                    <div class="text-3xl font-bold mt-1">15</div>
+                                </div>
+                                <div class="bg-green-100 p-3 rounded-full text-green-600">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                            <div class="mt-3 text-xs text-gray-500">
+                                <i class="fas fa-arrow-up text-green-500"></i> 8% from last semester
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="text-gray-500 text-sm">Upcoming Reviews</div>
+                                    <div class="text-3xl font-bold mt-1">4</div>
+                                </div>
+                                <div class="bg-purple-100 p-3 rounded-full text-purple-600">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                            </div>
+                            <div class="mt-3 text-xs text-gray-500">
+                                Next review in <span class="font-semibold">2 days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity Section -->
+                    <div class="bg-white rounded-lg shadow p-6 mb-8">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800">Recent Activity</h3>
+                            <button class="text-blue-600 hover:text-blue-800 text-sm">View All</button>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-start">
+                                <div class="bg-blue-100 p-2 rounded-full mr-3">
+                                    <i class="fas fa-file-upload text-blue-600"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="text-sm">
+                                        <span class="font-semibold">Project ABC</span> submitted final report
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">Computer Science • Today at 2:45 PM</div>
+                                </div>
+                                <button class="text-blue-600 hover:text-blue-800 text-sm">Review</button>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="bg-green-100 p-2 rounded-full mr-3">
+                                    <i class="fas fa-check-circle text-green-600"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="text-sm">
+                                        <span class="font-semibold">John Doe</span> marked project as completed
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">Engineering • Yesterday at 10:30 AM</div>
+                                </div>
+                                <button class="text-blue-600 hover:text-blue-800 text-sm">View</button>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="bg-yellow-100 p-2 rounded-full mr-3">
+                                    <i class="fas fa-exclamation-triangle text-yellow-600"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="text-sm">
+                                        Deadline reminder for <span class="font-semibold">Project XYZ</span>
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">Due in 3 days • Computer Science</div>
+                                </div>
+                                <button class="text-blue-600 hover:text-blue-800 text-sm">Remind</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Projects List Section -->
+                <section id="projects-section" class="hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-semibold text-gray-800">All Projects</h2>
+                        <div class="flex space-x-3">
+                            <div class="relative">
+                                <select class="appearance-none bg-white border rounded-full pl-3 pr-8 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                                    <option>Filter by Department</option>
+                                    <option>Computer Science</option>
+                                    <option>Engineering</option>
+                                    <option>Mathematics</option>
+                                    <option>Physics</option>
+                                </select>
+                                <i class="fas fa-caret-down absolute right-3 top-2.5 text-gray-400"></i>
+                            </div>
+                            <div class="relative">
+                                <select class="appearance-none bg-white border rounded-full pl-3 pr-8 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                                    <option>Filter by Status</option>
+                                    <option>All</option>
+                                    <option>Not Started</option>
+                                    <option>Ongoing</option>
+                                    <option>Completed</option>
+                                    <option>Rejected</option>
+                                </select>
+                                <i class="fas fa-caret-down absolute right-3 top-2.5 text-gray-400"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project Title</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team Members</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Faculty Guide</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submission Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <!-- Project 1 -->
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">AI Chatbot Development</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex -space-x-2 overflow-hidden">
+                                            <img class="inline-block h-8 w-8 rounded-full ring-2 ring-white" src="https://placehold.co/40x40" alt="Student photo with dark hair and glasses">
+                                            <img class="inline-block h-8 w-8 rounded-full ring-2 ring-white" src="https://placehold.co/40x40" alt="Student photo with blonde hair and smiling">
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">Dr. Smith</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">Computer Science</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="status-badge bg-blue-100 text-blue-800">Ongoing</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">May 15, 2023</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">
+                                        <button class="text-blue-600 hover:text-blue-800 mr-3"><i class="fas fa-eye"></i></button>
+                                        <button class="text-green-600 hover:text-green-800 mr-3" onclick="openEditModal(this.closest('tr'), [...this.closest('tbody').children].indexOf(this.closest('tr')))">
+    <i class="fas fa-edit"></i>
+</button>
+                                        <button class="text-red-600 hover:text-red-800" onclick="deleteProject(this)">
+    <i class="fas fa-trash"></i>
+</button>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Project 2 -->
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">IoT Smart Home System</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex -space-x-2 overflow-hidden">
+                                            <img class="inline-block h-8 w-8 rounded-full ring-2 ring-white" src="https://placehold.co/40x40" alt="Student photo with short hair and formal attire">
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">Prof. Johnson</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">Engineering</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="status-badge bg-green-100 text-green-800">Completed</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">Apr 28, 2023</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">
+                                        <button class="text-blue-600 hover:text-blue-800 mr-3"><i class="fas fa-eye"></i></button>
+                                        <button class="text-green-600 hover:text-green-800 mr-3"><i class="fas fa-edit"></i></button>
+                                        <button class="text-red-600 hover:text-red-800" onclick="deleteProject(this)">
+    <i class="fas fa-trash"></i>
+</button>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Project 3 -->
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">Data Visualization Tool</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex -space-x-2 overflow-hidden">
+                                            <img class="inline-block h-8 w-8 rounded-full ring-2 ring-white" src="https://placehold.co/40x40" alt="Student photo with curly hair and casual wear">
+                                            <img class="inline-block h-8 w-8 rounded-full ring-2 ring-white" src="https://placehold.co/40x40" alt="Student photo with serious expression and dark clothing">
+                                            <img class="inline-block h-8 w-8 rounded-full ring-2 ring-white" src="https://placehold.co/40x40" alt="Student photo smiling with red hair">
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">Dr. Lee</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">Computer Science</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="status-badge bg-yellow-100 text-yellow-800">Pending Review</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">May 20, 2023</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">
+                                        <button class="text-blue-600 hover:text-blue-800 mr-3"><i class="fas fa-eye"></i></button>
+                                        <button class="text-green-600 hover:text-green-800 mr-3"><i class="fas fa-edit"></i></button>
+                                        <button class="text-red-600 hover:text-red-800" onclick="deleteProject(this)">
+    <i class="fas fa-trash"></i>
+</button>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Project 4 -->
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">Quantum Computing Basics</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex -space-x-2 overflow-hidden">
+                                            <img class="inline-block h-8 w-8 rounded-full ring-2 ring-white" src="https://placehold.co/40x40" alt="Student photo with glasses and academic look">
+                                            <img class="inline-block h-8 w-8 rounded-full ring-2 ring-white" src="https://placehold.co/40x40" alt="Student photo with focused expression">
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">Prof. Wilson</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">Physics</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="status-badge bg-red-100 text-red-800">Rejected</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">May 10, 2023</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">
+                                        <button class="text-blue-600 hover:text-blue-800 mr-3"><i class="fas fa-eye"></i></button>
+                                        <button class="text-green-600 hover:text-green-800 mr-3"><i class="fas fa-edit"></i></button>
+                                        <button class="text-red-600 hover:text-red-800" onclick="deleteProject(this)">
+    <i class="fas fa-trash"></i>
+</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="flex items-center justify-between mt-6">
+                        <div class="text-sm text-gray-500">
+                            Showing <span class="font-medium">1</span> to <span class="font-medium">4</span> of <span class="font-medium">12</span> projects
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 border rounded-md bg-white text-gray-700 hover:bg-gray-50">&larr; Previous</button>
+                            <button class="px-3 py-1 border rounded-md bg-white text-gray-700 hover:bg-gray-50">1</button>
+                            <button class="px-3 py-1 border rounded-md bg-blue-600 text-white">2</button>
+                            <button class="px-3 py-1 border rounded-md bg-white text-gray-700 hover:bg-gray-50">3</button>
+                            <button class="px-3 py-1 border rounded-md bg-white text-gray-700 hover:bg-gray-50">Next &rarr;</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Project Details Section -->
+                <section id="project-details-section" class="hidden">
+                    <button id="back-to-projects" class="mb-4 flex items-center text-blue-600 hover:text-blue-800">
+                        <i class="fas fa-arrow-left mr-2"></i> Back to Projects
+                    </button>
+                    
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex justify-between items-start mb-6">
+                            <div>
+                                <h2 class="text-2xl font-bold text-gray-800">AI Chatbot Development</h2>
+                                <div class="text-gray-500 mt-1">Computer Science • Spring 2023</div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md flex items-center">
+                                    <i class="fas fa-download mr-2"></i> Export
+                                </button>
+                                <button class="text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded-md flex items-center">
+                                    <i class="fas fa-edit mr-2"></i> Edit
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Project Information -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800 mb-3">Project Description</h3>
+                                <p class="text-gray-700">
+                                    This project aims to develop an AI-powered chatbot capable of understanding natural language queries and providing appropriate responses. The system will leverage machine learning techniques and integrate with existing college databases to answer student questions about courses, schedules, and campus facilities.
+                                </p>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800 mb-3">Team Members</h3>
+                                <div class="space-y-3">
+                                    <div class="flex items-center">
+                                        <img class="h-10 w-10 rounded-full mr-3" src="https://placehold.co/40x40" alt="Team member photo with glasses and professional look">
+                                        <div>
+                                            <div class="font-medium">John Smith</div>
+                                            <div class="text-sm text-gray-500">CS2021001 • john.smith@college.edu</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <img class="h-10 w-10 rounded-full mr-3" src="https://placehold.co/40x40" alt="Team member smiling with curly hair">
+                                        <div>
+                                            <div class="font-medium">Sarah Johnson</div>
+                                            <div class="text-sm text-gray-500">CS2021005 • sarah.j@college.edu</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Project Documents -->
+                        <div class="mb-8">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Project Documents</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="border rounded-md p-3 hover:bg-gray-50">
+                                    <div class="flex items-start">
+                                        <div class="bg-blue-100 p-2 rounded-full mr-3">
+                                            <i class="fas fa-file-pdf text-blue-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="font-medium">Final Report.pdf</div>
+                                            <div class="text-xs text-gray-500">Uploaded: May 15, 2023</div>
+                                        </div>
+                                        <button class="text-blue-600 hover:text-blue-800">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="border rounded-md p-3 hover:bg-gray-50">
+                                    <div class="flex items-start">
+                                        <div class="bg-orange-100 p-2 rounded-full mr-3">
+                                            <i class="fas fa-file-powerpoint text-orange-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="font-medium">Presentation.pptx</div>
+                                            <div class="text-xs text-gray-500">Uploaded: May 10, 2023</div>
+                                        </div>
+                                        <button class="text-blue-600 hover:text-blue-800">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="border rounded-md p-3 hover:bg-gray-50">
+                                    <div class="flex items-start">
+                                        <div class="bg-purple-100 p-2 rounded-full mr-3">
+                                            <i class="fab fa-github text-purple-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="font-medium">GitHub Repository</div>
+                                            <div class="text-xs text-gray-500">Last commit: May 12, 2023</div>
+                                        </div>
+                                        <button class="text-blue-600 hover:text-blue-800">
+                                            <i class="fas fa-external-link-alt"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Project Progress -->
+                        <div class="mb-8">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Project Progress</h3>
+                            <div class="bg-gray-100 rounded-full h-4 mb-2">
+                                <div class="bg-blue-600 rounded-full h-4" style="width: 75%"></div>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span>75% completed</span>
+                                <span>Due in 15 days</span>
+                            </div>
+                        </div>
+
+                        <!-- Faculty Reviews -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Faculty Reviews</h3>
+                            <div class="space-y-4">
+                                <div class="border-l-4 border-blue-500 pl-4 py-2">
+                                    <div class="flex justify-between items-start">
+                                        <div class="font-medium">Dr. Smith</div>
+                                        <div class="text-xs text-gray-500">May 5, 2023</div>
+                                    </div>
+                                    <div class="text-gray-700 mt-1">
+                                        The project proposal looks promising. I suggest focusing more on the NLP component and how it handles ambiguous queries.
+                                    </div>
+                                </div>
+                                
+                                <div class="border-l-4 border-green-500 pl-4 py-2">
+                                    <div class="flex justify-between items-start">
+                                        <div class="font-medium">Prof. Johnson</div>
+                                        <div class="text-xs text-gray-500">May 12, 2023</div>
+                                    </div>
+                                    <div class="text-gray-700 mt-1">
+                                        The prototype demonstration was impressive. The integration with college systems needs more work. Grade: B+
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <h4 class="font-medium mb-2">Add Your Review</h4>
+                                    <textarea class="w-full border rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Enter your feedback..."></textarea>
+                                    <div class="flex justify-end mt-2">
+                                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">Submit Review</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Calendar Section -->
+                <section id="calendar-section" class="hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-semibold text-gray-800">Project Calendar</h2>
+                        <div class="flex space-x-2">
+                            <button class="bg-white border px-3 py-1 rounded-md">Today</button>
+                            <button class="bg-white border px-3 py-1 rounded-md">Week</button>
+                            <button class="bg-white border px-3 py-1 rounded-md">Month</button>
+                            <button class="bg-blue-600 text-white px-3 py-1 rounded-md">
+                                <i class="fas fa-plus mr-1"></i> Add Event
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <div id="calendar" class="p-4">
+                            <!-- Calendar would be implemented with a library like FullCalendar in a real app -->
+                            <img src="https://placehold.co/1200x600" alt="Calendar interface showing project deadlines and events" class="w-full">
+                        </div>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Upcoming Deadlines -->
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Upcoming Deadlines</h3>
+                            <div class="space-y-4">
+                                <div class="flex items-start">
+                                    <div class="bg-yellow-100 p-2 rounded-full mr-3">
+                                        <i class="fas fa-exclamation-circle text-yellow-600"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">Project XYZ Final Submission</div>
+                                        <div class="text-sm text-gray-500">Due: May 25, 2023 • Computer Science</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="bg-red-100 p-2 rounded-full mr-3">
+                                        <i class="fas fa-calendar-times text-red-600"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">Midterm Progress Reports</div>
+                                        <div class="text-sm text-gray-500">Due: June 1, 2023 • All Departments</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="bg-blue-100 p-2 rounded-full mr-3">
+                                        <i class="fas fa-chalkboard-teacher text-blue-600"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">Project Presentations</div>
+                                        <div class="text-sm text-gray-500">Due: June 10, 2023 • Room 302</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Events -->
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Recent Events</h3>
+                            <div class="space-y-4">
+                                <div class="flex items-start">
+                                    <div class="bg-green-100 p-2 rounded-full mr-3">
+                                        <i class="fas fa-check-circle text-green-600"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">Project ABC Submitted</div>
+                                        <div class="text-sm text-gray-500">May 15, 2023 • Computer Science</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="bg-purple-100 p-2 rounded-full mr-3">
+                                        <i class="fas fa-users text-purple-600"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">Faculty Meeting</div>
+                                        <div class="text-sm text-gray-500">May 12, 2023 • Conference Room</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- Right Sidebar - Notifications -->
+        <div class="hidden md:block w-64 bg-white border-l p-4 overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-semibold text-gray-800">Notifications</h3>
+                <button class="text-blue-600 hover:text-blue-800 text-sm">Mark all read</button>
+            </div>
+
+            <div class="space-y-4">
+                <div class="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500">
+                    <div class="flex justify-between">
+                        <div class="font-medium">New Project Submitted</div>
+                        <div class="text-xs text-gray-500">Today</div>
+                    </div>
+                    <div class="text-sm mt-1">"IoT Security Framework" submitted by Team CSE</div>
+                </div>
+
+                <div class="p-3 rounded-lg border-l-4 border-green-500">
+                    <div class="flex justify-between">
+                        <div class="font-medium">Grade Assigned</div>
+                        <div class="text-xs text-gray-500">Yesterday</div>
+                    </div>
+                    <div class="text-sm mt-1">You assigned A- to "AI Chatbot Development"</div>
+                </div>
+
+                <div class="p-3 rounded-lg border-l-4 border-yellow-500">
+                    <div class="flex justify-between">
+                        <div class="font-medium">Reminder</div>
+                        <div class="text-xs text-gray-500">May 10</div>
+                    </div>
+                    <div class="text-sm mt-1">Review meeting scheduled for tomorrow at 2 PM</div>
+                </div>
+
+                <div class="p-3 rounded-lg border-l-4 border-red-500">
+                    <div class="flex justify-between">
+                        <div class="font-medium">Late Submission</div>
+                        <div class="text-xs text-gray-500">May 8</div>
+                    </div>
+                    <div class="text-sm mt-1">"Quantum Algorithms" missed deadline</div>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <h3 class="font-semibold text-gray-800 mb-2">Quick Actions</h3>
+                <button class="w-full bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md mb-2">
+                    <i class="fas fa-plus mr-2"></i> Add New Project
+                </button>
+                <button class="w-full bg-white border hover:bg-gray-50 text-gray-800 p-2 rounded-md mb-2">
+                    <i class="fas fa-calendar-check mr-2"></i> Schedule Review
+                </button>
+                <button class="w-full bg-white border hover:bg-gray-50 text-gray-800 p-2 rounded-md">
+                    <i class="fas fa-file-export mr-2"></i> Export Reports
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- New Project Modal -->
+<div id="newProjectModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-lg p-6 w-full max-w-2xl shadow-lg">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-semibold text-gray-800">Add New Project</h2>
+      <button onclick="closeProjectModal()" class="text-gray-500 hover:text-red-500 text-xl">&times;</button>
+    </div>
+
+    <form id="newProjectForm">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Project Title</label>
+          <input type="text" name="title" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-200">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Department</label>
+          <select name="department" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+            <option>Computer Science</option>
+            <option>Engineering</option>
+            <option>Mathematics</option>
+            <option>Physics</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Faculty Guide</label>
+          <input type="text" name="faculty" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Status</label>
+          <select name="status" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+            <option>Not Started</option>
+            <option>Ongoing</option>
+            <option>Completed</option>
+            <option>Rejected</option>
+          </select>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700">Team Members</label>
+          <textarea name="team" rows="2" required placeholder="Enter comma-separated names" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Submission Date</label>
+          <input type="date" name="submissionDate" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end">
+        <button type="button" onclick="closeProjectModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded mr-2">Cancel</button>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Add Project</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+    <script>
+        // Toggle sidebar collapse
+        document.getElementById('toggleSidebar').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+            
+            const contentArea = document.querySelector('.content-area');
+            if (sidebar.classList.contains('collapsed')) {
+                contentArea.classList.add('ml-16');
+            } else {
+                contentArea.classList.remove('ml-16');
+            }
+        });
+
+        // Navigation between sections
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = this.getAttribute('href').substring(1);
+                
+                // Hide all sections
+                document.querySelectorAll('#main-content section').forEach(section => {
+                    section.classList.add('hidden');
+                });
+                
+                // Show target section
+                document.getElementById(`${target}-section`).classList.remove('hidden');
+                
+                // Update active menu item
+                document.querySelectorAll('.menu-item').forEach(menuItem => {
+                    menuItem.classList.remove('active');
+                });
+                this.classList.add('active');
+            });
+        });
+
+        function deleteProject(button) {
+    const row = button.closest("tr");
+    const projectTitle = row.children[0].innerText;
+
+    const confirmDelete = confirm(`Are you sure you want to delete "${projectTitle}"?`);
+    if (confirmDelete) {
+        row.remove();
+        alert(`"${projectTitle}" deleted successfully!`);
+    }
+}
+        // Show project details
+        document.querySelectorAll('table tr button:first-child').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Hide project list and show details
+                document.getElementById('projects-section').classList.add('hidden');
+                document.getElementById('project-details-section').classList.remove('hidden');
+            });
+        });
+
+        // Back to projects button
+        document.getElementById('back-to-projects').addEventListener('click', function() {
+            document.getElementById('project-details-section').classList.add('hidden');
+            document.getElementById('projects-section').classList.remove('hidden');
+        });
+
+        // Initialize with dashboard shown
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('dashboard-section').classList.remove('hidden');
+        });
+        
+        function openProjectModal() {
+    document.getElementById("newProjectModal").classList.remove("hidden");
+}
+function closeProjectModal() {
+    document.getElementById("newProjectModal").classList.add("hidden");
+}
+
+// Open and close edit modal
+function openEditModal(row, rowIndex) {
+    const modal = document.getElementById("editProjectModal");
+    const form = document.getElementById("editProjectForm");
+
+    form.rowIndex.value = rowIndex;
+    form.title.value = row.children[0].innerText;
+    form.team.value = "Edit manually if needed"; // Simplified
+    form.faculty.value = row.children[2].innerText;
+    form.department.value = row.children[3].innerText;
+    form.status.value = row.children[4].innerText;
+    form.submissionDate.value = "2023-05-20"; // Needs backend connection for real data
+
+    modal.classList.remove("hidden");
+}
+
+function closeEditModal() {
+    document.getElementById("editProjectModal").classList.add("hidden");
+}
+
+// Handle form submission
+document.getElementById("editProjectForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const rowIndex = parseInt(formData.get("rowIndex"));
+
+    const projectTable = document.querySelector("tbody");
+    const rows = projectTable.querySelectorAll("tr");
+    const row = rows[rowIndex];
+
+    row.children[0].innerText = formData.get("title");
+    row.children[2].innerText = formData.get("faculty");
+    row.children[3].innerText = formData.get("department");
+    row.children[4].innerHTML = `<span class="status-badge bg-blue-100 text-blue-800">${formData.get("status")}</span>`;
+    row.children[5].innerText = formData.get("submissionDate");
+
+    closeEditModal();
+    alert("Project updated successfully!");
+});
+
+// Handle form submit
+document.getElementById("newProjectForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const projectData = {};
+    formData.forEach((value, key) => {
+        projectData[key] = value;
+    });
+
+    console.log("Submitting new project:", projectData);
+    
+    // Here you would call your backend API with fetch()
+    // Example:
+    // fetch('/api/projects', {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify(projectData)
+    // });
+
+    closeProjectModal();
+    alert("Project submitted! (fake for now)");
+});
+    </script>
+</body>
+</html>

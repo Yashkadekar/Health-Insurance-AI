@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Management Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.0.1/build/global/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.2.0/dist/chartjs-adapter-luxon.min.js"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --secondary: #10b981;
+            --info: #3b82f6;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+        
+        .sidebar {
+            transition: all 0.3s;
+        }
+        
+        .sidebar-mini {
+            width: 80px;
+        }
+        
+        .sidebar-mini .nav-text {
+            display: none;
+        }
+        
+        .sidebar-full {
+            width: 260px;
+        }
+        
+        .kanban-column {
+            min-height: 500px;
+        }
+        
+        .kanban-card {
+            transition: transform 0.2s;
+        }
+        
+        .kanban-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .task-progress {
+            transition: width 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div id="sidebar" class="sidebar sidebar-full bg-gray-900 text-white shadow-xl">
+            <div class="flex items-center justify-between p-4 border-b border-gray-700">
+                <div class="flex items-center">
+                    <img src="https://placehold.co/40x40" alt="Project management dashboard logo with blue gradient background" class="rounded-lg mr-3">
+                    <span class="text-xl font-bold">ProTrack</span>
+                </div>
+                <button id="toggleSidebar" class="text-gray-400 hover:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+            <nav class="mt-6">
+                <div class="px-4">
+                    <div class="mb-6">
+                        <h3 class="text-xs uppercase font-semibold text-gray-400 px-2 mb-4">Dashboard</h3>
+                        <ul>
+                            <li class="mb-1">
+                                <a href="#" class="flex items-center p-2 rounded-lg bg-gray-800 text-white">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                                    </svg>
+                                    <span class="ml-3 nav-text">Overview</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h3 class="text-xs uppercase font-semibold text-gray-400 px-2 mb-4">Projects</h3>
+                        <ul>
+                            <li class="mb-1">
+                                <a href="#projects" class="flex items-center p-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2H4a1 1 0 110-2V4zm3 1h2v2H7V5zm4 0h2v2h-2V5zM7 9h2v2H7V9zm4 0h2v2h-2V9zm-4 4h2v2H7v-2zm4 0h2v2h-2v-2z" clip-rule="evenodd" />
+                                    </svg>
+                                    <span class="ml-3 nav-text">All Projects</span>
+                                    <span class="bg-gray-700 text-white text-xs font-medium px-2 py-0.5 rounded-full ml-auto nav-text">24</span>
+                                </a>
+                            </li>
+                            <li class="mb-1">
+                                <a href="#create-project" class="flex items-center p-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                                    </svg>
+                                    <span class="ml-3 nav-text">New Project</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h3 class="text-xs uppercase font-semibold text-gray-400 px-2 mb-4">Tasks</h3>
+                        <ul>
+                            <li class="mb-1">
+                                <a href="#tasks" class="flex items-center p-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+                                    </svg>
+                                    <span class="ml-3 nav-text">My Tasks</span>
+                                </a>
+                            </li>
+                            <li class="mb-1">
+                                <a href="#kanban" class="flex items-center p-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                                    </svg>
+                                    <span class="ml-3 nav-text">Kanban Board</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h3 class="text-xs uppercase font-semibold text-gray-400 px-2 mb-4">Team</h3>
+                        <ul>
+                            <li class="mb-1">
+                                <a href="#team" class="flex items-center p-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v1h-3zM4.75 12.094A5.973 5.973 0 004 15v1H1v-1a3 3 0 013.75-2.906z" />
+                                    </svg>
+                                    <span class="ml-3 nav-text">Members</span>
+                                </a>
+                            </li>
+                            <li class="mb-1">
+                                <a href="#messages" class="flex items-center p-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clip-rule="evenodd" />
+                                    </svg>
+                                    <span class="ml-3 nav-text">Messages</span>
+                                    <span class="bg-blue-500 text-white text-xs font-medium px-2 py-0.5 rounded-full ml-auto nav-text">5</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+            
+            <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-700">
+                <div class="flex items-center">
+                    <img src="https://placehold.co/40x40" alt="User profile picture of admin with professional appearance" class="rounded-full mr-3">
+                    <div class="nav-text">
+                        <p class="font-medium">Admin User</p>
+                        <p class="text-xs text-gray-400">admin@example.com</p>
+                    </div>
+                    <button class="ml-auto text-gray-400 hover:text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto">
+            <!-- Top Navigation -->
+            <header class="bg-white shadow-sm">
+                <div class="flex items-center justify-between px-6 py-4">
+                    <div class="flex items-center">
+                        <h1 class="text-xl font-bold text-gray-800">Dashboard Overview</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <input type="text" placeholder="Search..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 absolute left-3 top-2.5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <button class="p-2 rounded-full bg-gray-100 hover:bg-gray-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                            </svg>
+                        </button>
+                        <button class="p-2 rounded-full bg-gray-100 hover:bg-gray-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Main Content Area -->
+            <main class="p-6">
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-lg bg-blue-100 text-blue-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-sm font-medium text-gray-500">Total Projects</h3>
+                                <p class="text-2xl font-semibold text-gray-900">24</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-lg bg-green-100 text-green-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-sm font-medium text-gray-500">Completed Projects</h3>
+                                <p class="text-2xl font-semibold text-gray-900">8</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-lg bg-yellow-100 text-yellow-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-sm font-medium text-gray-500">Ongoing Projects</h3>
+                                <p class="text-2xl font-semibold text-gray-900">12</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-lg bg-red-100 text-red-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-sm font-medium text-gray-500">Upcoming Deadlines</h3>
+                                <p class="text-2xl font-semibold text-gray-900">4</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Charts and Recent Activity -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white rounded-lg shadow p-6 lg:col-span-2">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-lg font-semibold text-gray-800">Project Status</h2>
+                            <select class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option>This Month</option>
+                                <option>Last Month</option>
+                                <option>Last 6 Months</option>
+                            </select>
+                        </div>
+                        <div class="h-80">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-lg font-semibold text-gray-800">Recent Activity</h2>
+                            <button class="text-sm text-blue-600 hover:text-blue-800">View All</button>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <img src="https://placehold.co/40x40" alt="User avatar of Sarah Johnson with purple background" class="h-8 w-8 rounded-full">
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-gray-800">
+                                        <span class="font-medium">Sarah Johnson</span> created a new task in <span class="font-medium">AI Healthcare Chatbot</span>
+                                    </p>
+                                    <p class="text-xs text-gray-500">API Integration for NLP Module</p>
+                                    <p class="text-xs text-gray-400 mt-1">2 hours ago</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <img src="https://placehold.co/40x40" alt="User avatar of Michael Chen with blue background" class="h-8 w-8 rounded-full">
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-gray-800">
+                                        <span class="font-medium">Michael Chen</span> completed the task <span class="font-medium">UI Wireframes</span>
+                                    </p>
+                                    <p class="text-xs text-gray-400 mt-1">5 hours ago</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <img src="https://placehold.co/40x40" alt="User avatar of Emma Williams with green background" class="h-8 w-8 rounded-full">
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-gray-800">
+                                        <span class="font-medium">Emma Williams</span> uploaded a file to <span class="font-medium">Marketing Strategy</span>
+                                    </p>
+                                    <p class="text-xs text-gray-500">Q3_Marketing_Plan.pdf</p>
+                                    <p class="text-xs text-gray-400 mt-1">1 day ago</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <img src="https://placehold.co/40x40" alt="User avatar of David Kim with orange background" class="h-8 w-8 rounded-full">
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-gray-800">
+                                        <span class="font-medium">David Kim</span> commented on <span class="font-medium">Mobile App Development</span>
+                                    </p>
+                                    <p class="text-xs text-gray-500">"Let's discuss the UX improvements..."</p>
+                                    <p class="text-xs text-gray-400 mt-1">2 days ago</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Projects Section -->
+                <div class="mb-8" id="projects">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold text-gray-800">Recent Projects</h2>
+                        <button class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                            </svg>
+                            New Project
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Project Card 1 -->
+                        <div class="bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow duration-300">
+                            <img src="https://placehold.co/600x300" alt="AI healthcare chatbot interface showing conversation flow with doctor and patient" class="h-48 w-full object-cover">
+                            <div class="p-6">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-lg font-semibold text-gray-800">AI Healthcare Chatbot</h3>
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">In Progress</span>
+                                </div>
+                                <p class="mt-2 text-sm text-gray-500">Developing an AI-powered chatbot for patient triage and symptom analysis in healthcare settings.</p>
+                                <div class="mt-4">
+                                    <div class="flex justify-between text-xs text-gray-500 mb-1">
+                                        <span>Progress</span>
+                                        <span>60%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-blue-600 h-2 rounded-full" style="width: 60%"></div>
+                                    </div>
+                                </div>
+                                <div class="mt-4 flex items-center justify-between">
+                                    <div class="flex -space-x-2">
+                                        <img src="https://placehold.co/40x40" alt="Team member avatar for Sarah Johnson with red background" class="h-8 w-8 rounded-full border-2 border-white">
+                                        <img src="https://placehold.co/40x40" alt="Team member avatar for Michael Chen with blue background" class="h-8 w-8 rounded-full border-2 border-white">
+                                        <img src="https://placehold.co/40x40" alt="Team member avatar for Emma Williams with purple background" class="h-8 w-8 rounded-full border-2 border-white">
+                                        <span class="inline-flex items-center justify-center h-8 w-8 rounded-full border-2 border-white bg-gray-100 text-xs font-medium text-gray-500">+2</span>
+                                    </div>
+                                    <span class="text-xs text-gray-500">Due: Sept 15, 2025</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Project Card 2 -->
+                        <div class="bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow duration-300">
+                            <img src="https://placehold.co/600x300" alt="E-commerce platform dashboard showing analytics and product management" class="h-48 w-full object-cover">
+                            <div class="p-6">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-lg font-semibold text-gray-800">E-commerce Platform</h3>
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">Pending</span>
+                                </div>
+                                <p class="mt-2 text-sm text-gray-500">Building a modern e-commerce platform with AI recommendations and seamless checkout.</p>
+                                <div class="mt-4">
+                                    <div class="flex justify-between text-xs text-gray-500 mb-1">
+                                        <span>Progress</span>
+                                        <span>15%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-yellow-500 h-2 rounded-full" style="width: 15%"></div>
+                                    </div>
+                                </div>
+                                <div class="mt-4 flex items-center justify-between">
+                                    <div class="flex -space-x-2">
+                                        <img src="https://placehold.co/40x40" alt="Team member avatar for David Kim with green background" class="h-8 w-8 rounded-full border-2 border-white">
+                                        <img src="https://placehold.co/40x40" alt="Team member avatar for Alex Turner with orange background" class="h-8 w-8 rounded-full border-2 border-white">
+                                    </div>
+                                    <span class="text-xs text-gray-500">Due: Oct 30, 2025</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Project Card 3 -->
+                        <div class="bg-white rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow duration-300">
+                            <img src="https://placehold.co/600x300" alt="Mobile app interface for fitness tracking with workout statistics" class="h-48 w-full object-cover">
+                            <div class="p-6">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-lg font-semibold text-gray-800">Fitness Tracker App</h3>
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">Completed</span>
+                                </div>
+                                <p class="mt-2 text-sm text-gray-500">Mobile application to track workouts, nutrition, and health metrics with personalized plans.</p>
+                                <div class="mt-4">
+                                    <div class="flex justify-between text-xs text-gray-500 mb-1">
+                                        <span>Progress</span>
+                                        <span>100%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-purple-600 h-2 rounded-full" style="width: 100%"></div>
+                                    </div>
+                                </div>
+                                <div class="mt-4 flex items-center justify-between">
+                                    <div class="flex -space-x-2">
+                                        <img src="https://placehold.co/40x40" alt="Team member avatar for Lisa Park with pink background" class="h-8 w-8 rounded-full border-2 border-white">
+                                        <img src="https://placehold.co/40x40" alt="Team member avatar for James Wilson with teal background" class="h-8 w-8 rounded-full border-2 border-white">
+                                        <img src="https://placehold.co/40x40" alt="Team member avatar for Olivia Smith with yellow background" class="h-8 w-8 rounded-full border-2 border-white">
+                                    </div>
+                                    <span class="text-xs text-gray-500">Completed: Jun 10, 2025</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Project Details Section -->
+                <div class="mb-8" id="project-details">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold text-gray-800">AI Healthcare Chatbot Project</h2>
+                        <div>
+                            <button class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-1.5 h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                                    <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
+                                </svg>
+                                Edit
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <div class="p-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <h3 class="text-md font-medium text-gray-900 mb-4">Project Information</h3>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-500">Project Description</label>
+                                            <p class="mt-1 text-sm text-gray-900">Developing an AI-powered chatbot that can assist in patient triage, provide basic healthcare information, and connect patients with appropriate medical professionals based on their symptoms and needs.</p>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-500">Department</label>
+                                            <p class="mt-1 text-sm text-gray-900">Computer Science & Healthcare</p>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-500">Project Type</label>
+                                            <p class="mt-1 text-sm text-gray-900">Research Project</p>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-500">Supervisor</label>
+                                            <p class="mt-1 text-sm text-gray-900">Prof. Jennifer Wilson</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 class="text-md font-medium text-gray-900 mb-4">Timeline & Progress</h3>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-500">Start Date</label>
+                                            <p class="mt-1 text-sm text-gray-900">Aug 1, 2025</p>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-500">End Date</label>
+                                            <p class="mt-1 text-sm text-gray-900">Sept 15, 2025</p>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-500">Status</label>
+                                            <p class="mt-1 text-sm text-gray-900"><span class="px-2 py-1 rounded-full bg-green-100 text-green-800 text-xs font-medium">In Progress</span></p>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-500">Progress</label>
+                                            <div class="mt-1">
+                                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                                    <div class="bg-blue-600 h-2 rounded-full task-progress" style="width: 60%"></div>
+                                                </div>
+                                                <p class="mt-1 text-xs text-gray-500">60% completed</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Team Members -->
+                            <div class="mt-8">
+                                <h3 class="text-md font-medium text-gray-900 mb-4">Team Members</h3>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tasks</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-200">
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="flex items-center">
+                                                        <img src="https://placehold.co/40x40" alt="Team lead avatar for Sarah Johnson with blue background" class="h-10 w-10 rounded-full">
+                                                        <div class="ml-4">
+                                                            <div class="text-sm font-medium text-gray-900">Sarah Johnson</div>
+                                                            <div class="text-sm text-gray-500">Team Lead</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Lead Developer</span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">sarah.johnson@univ.edu</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    <div class="flex -space-x-1">
+                                                        <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-200 text-xs font-medium text-gray-700">5</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="flex items-center">
+                                                        <img src="https://placehold.co/40x40" alt="Developer avatar for Michael Chen with green background" class="h-10 w-10 rounded-full">
+                                                        <div class="ml-4">
+                                                            <div class="text-sm font-medium text-gray-900">Michael Chen</div>
+                                                            <div class="text-sm text-gray-500">Developer</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Backend</span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">michael.chen@univ.edu</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    <div class="flex -space-x-1">
+                                                        <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-200 text-xs font-medium text-gray-700">3</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="flex items-center">
+                                                        <img src="https://placehold.co/40x40" alt="Designer avatar for Emma Williams with purple background" class="h-10 w-10 rounded-full">
+                                                        <div class="ml-4">
+                                                            <div class="text-sm font-medium text-gray-900">Emma Williams</div>
+                                                            <div class="text-sm text-gray-500">Designer</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">UI/UX</span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">emma.williams@univ.edu</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    <div class="flex -space-x-1">
+                                                        <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-200 text-xs font-medium text-gray-700">4</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="flex items-center">
+                                                        <img src="https://placehold.co/40x40" alt="Researcher avatar for David Kim with orange background" class="h-10 w-10 rounded-full">
+                                                        <div class="ml-4">
+                                                            <div class="text-sm font-medium text-gray-900">David Kim</div>
+                                                            <div class="text-sm text-gray-500">Researcher</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Research</span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">david.kim@univ.edu</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    <div class="flex -space-x-1">
+                                                        <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-200 text-xs font-medium text-gray-700">2</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <!-- Tasks & Milestones -->
+                            <div class="mt-8">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-md font-medium text-gray-900">Tasks & Milestones</h3>
+                                    <button id="newTaskButton" class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-1.5 h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                                        </svg>
+                                        New Task
+                                    </button>
+                                </div>
+                                
+                                <!-- New Task Modal (Hidden by default) -->
+                                <div id="newTaskModal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                                    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                                        <!-- Background overlay -->
+                                        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+                                        <!-- Modal panel -->
+                                        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                                            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                                <div class="sm:flex sm:items-start">
+                                                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                                                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">New Task</h3>
+                                                        <div class="mt-2">
+                                                            <div class="space-y-4">
+                                                                <div>
+                                                                    <label for="taskTitle" class="block text-sm font-medium text-gray-700">Task Title</label>
+                                                                    <input type="text" name="taskTitle" id="taskTitle" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                                                </div>
+                                                                <div>
+                                                                    <label for="taskDescription" class="block text-sm font-medium text-gray-700">Description</label>
+                                                                    <textarea id="taskDescription" name="taskDescription" rows="3" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border-gray-300 rounded-md"></textarea>
+                                                                </div>
+                                                                <div>
+                                                                    <label for="taskAssignee" class="block text-sm font-medium text-gray-700">Assign To</label>
+                                                                    <select id="taskAssignee" name="taskAssignee" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                                                        <option>Sarah Johnson</option>
+                                                                        <option>Michael Chen</option>
+                                                                        <option>Emma Williams</option>
+                                                                        <option>David Kim</option>
+                                                                    </select>
+                                                                </div>
+                                                                <div>
+                                                                    <label for="taskDeadline" class="block text-sm font-medium text-gray-700">Deadline</label>
+                                                                    <input type="date" name="taskDeadline" id="taskDeadline" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                                                <button type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
+                                                    Create Task
+                                                </button>
+                                                <button id="cancelTaskButton" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Kanban Board -->
+                                <div class="mt-6">
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <!-- To Do Column -->
+                                        <div class="bg-gray-50 p-4 rounded-lg kanban-column">
+                                            <div class="flex items-center justify-between mb-4">
+                                                <h4 class="font-medium text-gray-700">To Do</h4>
+                                                <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-200 text-xs font-medium text-gray-700">3</span>
+                                            </div>
+                                            <div class="space-y-3">
+                                                <!-- Task Card -->
+                                                <div class="bg-white p-4 rounded-lg shadow-sm kanban-card">
+                                                    <div class="flex items-start justify-between">
+                                                        <div>
+                                                            <h5 class="text-sm font-medium text-gray-800">NLP Module Integration</h5>
+                                                            <p class="text-xs text-gray-500 mt-1">Integrate the trained NLP model for symptom analysis</p>
+                                                        </div>
+                                                        <button class="text-gray-400 hover:text-gray-600">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                    <div class="mt-3 flex items-center justify-between">
+                                                        <div class="flex items-center text-xs text-gray-500">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+                                                            </svg>
+                                                            Due: Aug 25, 2025
+                                                        </div>
+                                                        <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800">High</span>
+                                                    </div>
+                                                    <div class="mt-3 flex items-center">
+                                                        <img src="https://placehold.co/40x40" alt="Assigned team member Michael Chen with focused expression" class="h-6 w-6 rounded-full border-2 border-white -ml-1">
+                                                        <span class="ml-1 text-xs text-gray-500">Assigned to Michael</span>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Task Card -->
+                                                <div class="bg-white p-4 rounded-lg shadow-sm kanban-card">
+                                                    <div class="flex items-start justify-between">
+                                                        <div>
+                                                            <h5 class="text-sm font-medium text-gray-800">User Testing Session</h5>
+                                                            <p class="text-xs text-gray-500 mt-1">Conduct testing with healthcare professionals</p>
+                                                        </div>
+                                                        <button class="text-gray-400 hover:text-gray-600">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                    <div class="mt-3 flex items-center justify-between">
+                                                        <div class="flex items-center text-xs text-gray-500">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+                                                            </svg>
+                                                            Due: Aug 30, 2025
+                                                        </div>
+                                                        <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">Medium</span>
+                                                    </div>
+                                                    <div class="mt-3 flex items-center">
+                                                        <img src="https://placehold.co/40x40" alt="Assigned team member Sarah Johnson looking professional" class="h-6 w-6 rounded-full border-2 border-white -ml-1">
+                                                        <span class="ml-1 text-xs text-gray-500">Assigned to Sarah</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- In Progress Column -->
+                                        <div class="bg-gray-50 p-4 rounded-lg kanban-column">
+                                            <div class="flex items-center justify-between mb-4">
+                                                <h4 class="font-medium text-gray-700">In Progress</h4>
+                                                <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-200 text-xs font-medium text-gray-700">4</span>
+                                            </div>
+                                            <div class="space-y-3">
+                                                <!-- Task Card -->
+                                                <div class="bg-white p-4 rounded-lg shadow-sm kanban-card">
+                                                    <div class="flex items-start justify-between">
+                                                        <div>
+                                                            <h5 class="text-sm font-medium text-gray-800">Patient Onboarding Flow</h5>
+                                                            <p class="text-xs text-gray-500 mt-1">Design and implement onboarding process</p>
+                                                        </div>
+                                                        <button class="text-gray-400 hover:text-gray-600">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                    <div class="mt-3 flex items-center justify-between">
+                                                        <div class="flex items-center text-xs text-gray-500">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+                                                            </svg>
+                                                            Due: Aug 20, 2025
+                                                        </div>
+                                                        <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800">High</span>
+                                                    </div>
+                                                    <div class="mt-3 flex items-center">
+                                                        <img src="https://placehold.co/40x40" alt="Assigned team member Emma Williams with thoughtful expression" class="h-6 w-6 rounded-full border-2 border-white -ml-1">
+                                                        <span class="ml-1 text-xs text-gray-500">Assigned to Emma</span>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Task Card -->
+                                                <div class="bg-white p-4 rounded-lg shadow-sm kanban-card">
+                                                    <div class="flex items-start justify-between">
+                                                        <div>
+                                                            <h5 class="text-sm font-medium text-gray-800">Data Privacy Compliance</h5>
+                                                            <p class="text-xs text-gray-500 mt-1">Implement GDPR and HIPAA compliance measures</p>
+                                                        </div>
+                                                        <button class="text-gray-400 hover:text-gray-600">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                    <div class="mt-3 flex items-center justify-between">
+                                                        <div class="flex items-center text-xs text-gray-500">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+                                                            </svg>
+                                                            Due: Aug 28, 2025
+                                                        </div>
+                                                        <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">Medium</span>
+                                                    </div>
+                                                    <div class="mt-3 flex items-center">
+                                                        <img src="https://placehold.co/40x40" alt="Assigned team member David Kim looking confident" class="h-6 w-6 rounded-full border-2 border-white -ml-1">
+                                                        <span class="ml-1 text-xs text-gray-500">Assigned to David</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Done Column -->
+                                        <div class="bg-gray-50 p-4 rounded-lg kanban-column">
+                                            <div class="flex items-center justify-between mb-4">
+                                                <h4 class="font-medium text-gray-700">Done</h4>
+                                                <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-200 text-xs font-medium text-gray-700">5</span>
+                                            </div>
+                                            <div class="space-y-3">
+                                                <!-- Task Card -->
+                                                <div class="bg-white p-4 rounded-lg shadow-sm kanban-card">
+                                                    <div class="flex items-start justify-between">
+                                                        <div>
+                                                            <h5 class="text-sm font-medium text-gray-800">Initial Research</h5>
+                                                            <p class="text-xs text-gray-500 mt-1">Complete market and competitor analysis</p>
+                                                        </div>
+                                                        <button class="text-gray-400 hover:text-gray-600">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                    <div class="mt-3 flex items-center justify-between">
+                                                        <div class="flex items-center text-xs text-gray-500">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+                                                            </svg>
+                                                            Due: Aug 5, 2025
+                                                        </div>
+                                                        <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800">Completed</span>
+                                                    </div>
+                                                    <div class="mt-3 flex items-center">
+                                                        <img src="https://placehold.co/40x40" alt="Assigned team member David Kim with satisfied expression" class="h-6 w-6 rounded-full border-2 border-white -ml-1">
+                                                        <span class="ml-1 text-xs text-gray-500">Assigned to David</span>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Task Card -->
+                                                <div class="bg-white p-4 rounded-lg shadow-sm kanban-card">
+                                                    <div class="flex items-start justify-between">
+                                                        <div>
+                                                            <h5 class="text-sm font-medium text-gray-800">UI Wireframes</h5>
+                                                            <p class="text-xs text-gray-500 mt-1">Design all interface screens</p>
+                                                        </div>
+                                                        <button class="text-gray-400 hover:text-gray-600">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                    <div class="mt-3 flex items-center justify-between">
+                                                        <div class="flex items-center text-xs text-gray-500">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+                                                            </svg>
+                                                            Due: Aug 10, 2025
+                                                        </div>
+                                                        <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800">Completed</span>
+                                                    </div>
+                                                    <div class="mt-3 flex items-center">
+                                                        <img src="https://placehold.co/40x40" alt="Assigned team member Emma Williams with creative expression" class="h-6 w-6 rounded-full border-2 border-white -ml-1">
+                                                        <span class="ml-1 text-xs text-gray-500">Assigned to Emma</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Files & Documents -->
+                            <div class="mt-8">
+                                <h3 class="text-md font-medium text-gray-900 mb-4">Files & Documents</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div class="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                                        <div class="flex items-center">
+                                            <div class="p-3 rounded-lg bg-blue-100 text-blue-600">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                            </div>
+                                            <div class="ml-4">
+                                                <h4 class="text-sm font-medium text-gray-900">Project Proposal</h4>
+                                                <p class="text-xs text-gray-500">PDF - 2.4 MB</p>
+                                                <p class="text-xs text-gray-400 mt-1">Uploaded: Aug 2, 2025</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                                        <div class="flex items-center">
+                                            <div class="p-3 rounded-lg bg-purple-100 text-purple-600">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                            </div>
+                                            <div class="ml-4">
+                                                <h4 class="text-sm font-medium text-gray-900">UI Mockups</h4>
+                                                <p class="text-xs text-gray-500">PNG - 5.1 MB</p>
+                                                <p class="text-xs text-gray-400 mt-1">Uploaded: Aug 12, 2025</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                                        <div class="flex items-center">
+                                            <div class="p-3 rounded-lg bg-green-100 text-green-600">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                            </div>
+                                            <div class="ml-4">
+                                                <h4 class="text-sm font-medium text-gray-900">Research Findings</h4>
+                                                <p class="text-xs text-gray-500">DOCX - 1.8 MB</p>
+                                                <p class="text-xs text-gray-400 mt-1">Uploaded: Aug 8, 2025</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                                        <div class="flex items-center">
+                                            <div class="p-3 rounded-lg bg-red-100 text-red-600">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a1 1 0 011.414 0l2.829 2.829a1 1 0 010 1.414l-8.486 8.485M7 17h.01" />
+                                                </svg>
+                                            </div>
+                                            <div class="ml-4">
+                                                <h4 class="text-sm font-medium text-gray-900">Brand Assets</h4>
+                                                <p class="text-xs text-gray-500">ZIP - 12.7 MB</p>
+                                                <p class="text-xs text-gray-400 mt-1">Uploaded: Aug 15, 2025</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Discussion -->
+                            <div class="mt-8">
+                                <h3 class="text-md font-medium text-gray-900 mb-4">Discussion</h3>
+                                <div class="bg-white rounded-lg shadow p-6">
+                                    <div class="space-y-4">
+                                        <!-- Comment 1 -->
+                                        <div class="flex">
+                                            <div class="flex-shrink-0">
+                                                <img src="https://placehold.co/40x40" alt="User avatar of Sarah Johnson with professional look" class="h-10 w-10 rounded-full">
+                                            </div>
+                                            <div class="ml-4">
+                                                <div class="flex items-center">
+                                                    <h4 class="text-sm font-medium text-gray-900">Sarah Johnson</h4>
+                                                    <span class="ml-2 text-xs text-gray-500">2 hours ago</span>
+                                                </div>
+                                                <div class="mt-1 text-sm text-gray-700">
+                                                    <p>Has everyone reviewed the new NLP integration requirements? Michael, can you confirm if we have all the API documentation we need for this?</p>
+                                                </div>
+                                                <div class="mt-2 flex space-x-4 text-xs text-gray-500">
+                                                    <button class="hover:text-gray-700">Like</button>
+                                                    <button class="hover:text-gray-700">Reply</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Comment 2 -->
+                                        <div class="flex">
+                                            <div class="flex-shrink-0">
+                                                <img src="https://placehold.co/40x40" alt="User avatar of Michael Chen looking technical" class="h-10 w-10 rounded-full">
+                                            </div>
+                                            <div class="ml-4">
+                                                <div class="flex items-center">
+                                                    <h4 class="text-sm font-medium text-gray-900">Michael Chen</h4>
+                                                    <span class="ml-2 text-xs text-gray-500">1 hour ago</span>
+                                                </div>
+                                                <div class="mt-1 text-sm text-gray-700">
+                                                    <p>Yes, I've gone through them. We have most of what we need, but we'll require the clinical terminology dataset from the research team. David, do you have an ETA on when that will be available?</p>
+                                                </div>
+                                                <div class="mt-2 flex space-x-4 text-xs text-gray-500">
+                                                    <button class="hover:text-gray-700">Like</button>
+                                                    <button class="hover:text-gray-700">Reply</button>
+                                                </div>
+                                                
+                                                <!-- Reply -->
+                                                <div class="mt-4 flex">
+                                                    <div class="flex-shrink-0">
+                                                        <img src="https://placehold.co/40x40" alt="User avatar of David Kim with research-focused expression" class="h-8 w-8 rounded-full">
+                                                    </div>
+                                                    <div class="ml-3">
+                                                        <div class="flex items-center">
+                                                            <h4 class="text-sm font-medium text-gray-900">David Kim</h4>
+                                                            <span class="ml-2 text-xs text-gray-500">45 minutes ago</span>
+                                                        </div>
+                                                        <div class="mt-1 text-sm text-gray-700">
+                                                            <p>We're finalizing the dataset now. Expect it by Friday at the latest. I'll send it over as soon as it's validated.</p>
+                                                        </div>
+                                                        <div class="mt-2 flex space-x-4 text-xs text-gray-500">
+                                                            <button class="hover:text-gray-700">Like</button>
+                                                            <button class="hover:text-gray-700">Reply</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- New Comment Form -->
+                                        <div class="mt-6">
+                                            <div class="flex">
+                                                <div class="flex-shrink-0">
+                                                    <img src="https://placehold.co/40x40" alt="Current user avatar" class="h-10 w-10 rounded-full">
+                                                </div>
+                                                <div class="ml-4 flex-1">
+                                                    <div class="border border-gray-300 rounded-lg shadow-sm overflow-hidden">
+                                                        <label for="comment" class="sr-only">Add your comment</label>
+                                                        <textarea id="comment" name="comment" rows="3" class="py-3 px-4 block w-full focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="Add your comment..."></textarea>
+                                                        <div class="px-3 py-2 bg-gray-50 flex justify-between">
+                                                            <div class="flex-shrink-0">
+                                                                <button type="button" class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 20 20" stroke="currentColor">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                                                    </svg>
+                                                                    Attach
+                                                                </button>
+                                                            </div>
+                                                            <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                                                Post
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Calendar Section -->
+                <div class="mb-8" id="calendar">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold text-gray-800">Upcoming Deadlines</h2>
+                        <div class="flex items-center space-x-2">
+                            <select class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option>Month View</option>
+                                <option>Week View</option>
+                                <option>Day View</option>
+                            </select>
+                            <button class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                Add Event
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <div class="grid grid-cols-7 divide-x divide-gray-200 border-b border-gray-200">
+                            <div class="text-xs font-medium text-gray-500 uppercase tracking-wider text-center py-2">Sun</div>
+                            <div class="text-xs font-medium text-gray-500 uppercase tracking-wider text-center py-2">Mon</div>
+                            <div class="text-xs font-medium text-gray-500 uppercase tracking-wider text-center py-2">Tue</div>
+                            <div class="text-xs font-medium text-gray-500 uppercase tracking-wider text-center py-2">Wed</div>
+                            <div class="text-xs font-medium text-gray-500 uppercase tracking-wider text-center py-2">Thu</div>
+                            <div class="text-xs font-medium text-gray-500 uppercase tracking-wider text-center py-2">Fri</div>
+                            <div class="text-xs font-medium text-gray-500 uppercase tracking-wider text-center py-2">Sat</div>
+                        </div>
+                        <div class="grid grid-cols-7 divide-x divide-gray-200">
+                            <!-- Week 1 -->
+                            <div class="h-28 p-1 border-b border-gray-200">
+                                <div class="text-xs text-gray-500 text-right p-1">30</div>
+                            </div>
+                            <div class="h-28 p-1 border-b border-gray-200">
+                                <div class="text-xs text-gray-500 text-right p-1">31</div>
+                            </div>
+                            <div class="h-28 p-1 border-b border-gray-200">
+                                <div class="text-xs text-gray-900 text-right p-1">1</div>
+                                <div class="mt-1">
+                                    <a href="#" class="block px-1 py-0.5 text-xs rounded bg-green-100 text-green-800 truncate">Research review</a>
+                                </div>
+                            </div>
+                            <div class="h-28 p-1 border-b border-gray-200">
+                                <div class="text-xs text-gray-900 text-right p-1">2</div>
+                            </div>
+                            <div class="h-28 p-1 border-b border-gray-200">
+                                <div class="text-xs text-gray-900 text-right p-1">3</div>
+                            </div>
+                            <div class="h-28 p-1 border-b border-gray-200">
+                                <div class="text-xs text-gray-900 text-right p-1">4</div>
+                                <div class="mt-1">
+                                    <a href="#" class="block px-1 py-0.5 text-xs rounded bg-purple-100 text-purple-800 truncate">UI Design due</a>
+                                </div>
+                            </div>
+                            <div class="h-28 p-1 border-b border-gray-200
