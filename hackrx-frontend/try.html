@@ -1,0 +1,2221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College Project Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Custom styles */
+        .gradient-bg {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        }
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .countdown {
+            font-family: monospace;
+        }
+        #progress-chart, #faculty-chart {
+            max-height: 250px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
+        <div class="bg-white rounded-lg p-8 w-full max-w-md">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Login</h2>
+                <button id="close-auth" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="mb-6">
+                <div class="flex border-b">
+                    <button id="login-tab" class="px-4 py-2 font-medium text-purple-600 border-b-2 border-purple-600">Login</button>
+                    <button id="register-tab" class="px-4 py-2 font-medium text-gray-500">Register (Demo)</button>
+                </div>
+            </div>
+            
+            <!-- Login Form -->
+            <div id="login-form">
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2" for="login-username">Username</label>
+                    <input type="text" id="login-username" class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2" for="login-password">Password</label>
+                    <input type="password" id="login-password" class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2" for="login-role">Role</label>
+                    <select id="login-role" class="w-full p-2 border rounded">
+                        <option value="student">Student</option>
+                        <option value="faculty">Faculty</option>
+                    </select>
+                </div>
+                <button id="login-btn" class="w-full gradient-bg text-white py-2 rounded hover:opacity-90">Login</button>
+                <p class="mt-4 text-center text-gray-600">Demo accounts: student1/1234, faculty1/1234</p>
+            </div>
+            
+            <!-- Register Form -->
+            <div id="register-form" style="display: none;">
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2" for="register-username">Username</label>
+                    <input type="text" id="register-username" class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2" for="register-password">Password</label>
+                    <input type="password" id="register-password" class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2" for="register-name">Full Name</label>
+                    <input type="text" id="register-name" class="w-full p-2 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2" for="register-role">Role</label>
+                    <select id="register-role" class="w-full p-2 border rounded">
+                        <option value="student">Student</option>
+                        <option value="faculty">Faculty</option>
+                    </select>
+                </div>
+                <button id="register-btn" class="w-full bg-gray-200 text-gray-800 py-2 rounded hover:bg-gray-300">Register (Demo Only)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app" class="min-h-screen flex flex-col" style="display: none;">
+        <!-- Header -->
+        <header class="gradient-bg text-white shadow-md">
+            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-project-diagram text-2xl"></i>
+                    <h1 class="text-xl font-bold">College Project Management</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span id="current-user" class="font-medium"></span>
+                    <span id="user-role" class="px-3 py-1 bg-white bg-opacity-20 rounded-full text-sm"></span>
+                    <button id="logout-btn" class="text-white hover:text-gray-200">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex flex-1">
+            <!-- Sidebar -->
+            <nav id="sidebar" class="sidebar w-64 bg-white shadow-md">
+                <div class="p-4">
+                    <div id="student-menu" style="display: none;">
+                        <div class="mb-6">
+                            <h3 class="text-xs uppercase font-semibold text-gray-500 px-2 mb-2">Dashboard</h3>
+                            <ul>
+                                <li><a href="#" class="sidebar-link active" data-section="student-dashboard"><i class="fas fa-tachometer-alt mr-2"></i>My Dashboard</a></li>
+                                <li><a href="#" class="sidebar-link" data-section="student-projects"><i class="fas fa-list-ol mr-2"></i>My Projects</a></li>
+                                <li><a href="#" class="sidebar-link" data-section="student-submissions"><i class="fas fa-file-upload mr-2"></i>Submissions</a></li>
+                            </ul>
+                        </div>
+                        <div class="mb-6">
+                            <h3 class="text-xs uppercase font-semibold text-gray-500 px-2 mb-2">Communication</h3>
+                            <ul>
+                                <li><a href="#" class="sidebar-link" data-section="student-discussions"><i class="fas fa-comments mr-2"></i>Discussions</a></li>
+                                <li><a href="#" class="sidebar-link" data-section="student-messages"><i class="fas fa-envelope mr-2"></i>Messages</a></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 class="text-xs uppercase font-semibold text-gray-500 px-2 mb-2">Tools</h3>
+                            <ul>
+                                <li><a href="#" class="sidebar-link" data-section="student-calendar"><i class="fas fa-calendar-alt mr-2"></i>Calendar</a></li>
+                                <li><a href="#" class="sidebar-link" data-section="student-analytics"><i class="fas fa-chart-line mr-2"></i>Analytics</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div id="faculty-menu" style="display: none;">
+                        <div class="mb-6">
+                            <h3 class="text-xs uppercase font-semibold text-gray-500 px-2 mb-2">Dashboard</h3>
+                            <ul>
+                                <li><a href="#" class="sidebar-link active" data-section="faculty-dashboard"><i class="fas fa-tachometer-alt mr-2"></i>Overview</a></li>
+                                <li><a href="#" class="sidebar-link" data-section="faculty-projects"><i class="fas fa-project-diagram mr-2"></i>All Projects</a></li>
+                                <li><a href="#" class="sidebar-link" data-section="faculty-students"><i class="fas fa-users mr-2"></i>Students</a></li>
+                            </ul>
+                        </div>
+                        <div class="mb-6">
+                            <h3 class="text-xs uppercase font-semibold text-gray-500 px-2 mb-2">Management</h3>
+                            <ul>
+                                <li><a href="#" class="sidebar-link" data-section="faculty-create-project"><i class="fas fa-plus-circle mr-2"></i>Create Project</a></li>
+                                <li><a href="#" class="sidebar-link" data-section="faculty-submissions"><i class="fas fa-tasks mr-2"></i>Review Submissions</a></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 class="text-xs uppercase font-semibold text-gray-500 px-2 mb-2">Reports</h3>
+                            <ul>
+                                <li><a href="#" class="sidebar-link" data-section="faculty-analytics"><i class="fas fa-chart-pie mr-2"></i>Analytics</a></li>
+                                <li><a href="#" class="sidebar-link" data-section="faculty-reports"><i class="fas fa-file-export mr-2"></i>Export Data</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="flex-1 p-6">
+                <!-- Loading Indicator -->
+                <div id="loading" class="flex justify-center items-center py-20" style="display: none;">
+                    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+                </div>
+
+                <!-- Student Dashboard -->
+                <div id="student-dashboard" class="content-section">
+                    <div class="mb-6 flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-gray-800">Student Dashboard</h2>
+                        <div class="text-sm text-gray-500">Welcome back, <span id="student-name" class="font-medium text-purple-600"></span></div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white rounded-lg shadow p-6 card-hover">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-sm text-gray-500">Total Projects</p>
+                                    <h3 class="text-3xl font-bold text-gray-800 mt-1" id="total-projects">0</h3>
+                                </div>
+                                <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                                    <i class="fas fa-project-diagram"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6 card-hover">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-sm text-gray-500">Ongoing</p>
+                                    <h3 class="text-3xl font-bold text-gray-800 mt-1" id="ongoing-projects">0</h3>
+                                </div>
+                                <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                                    <i class="fas fa-spinner"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6 card-hover">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-sm text-gray-500">Submitted</p>
+                                    <h3 class="text-3xl font-bold text-gray-800 mt-1" id="submitted-projects">0</h3>
+                                </div>
+                                <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                                    <i class="fas fa-file-upload"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6 card-hover">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-sm text-gray-500">Completed</p>
+                                    <h3 class="text-3xl font-bold text-gray-800 mt-1" id="completed-projects">0</h3>
+                                </div>
+                                <div class="p-3 rounded-full bg-green-100 text-green-600">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-white rounded-lg shadow p-6 lg:col-span-2 card-hover">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Project Progress</h3>
+                            <div class="h-64">
+                                <canvas id="progress-chart"></canvas>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6 card-hover">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Upcoming Deadlines</h3>
+                            <div id="deadline-list" class="space-y-3">
+                                <!-- Deadlines will be loaded here -->
+                            </div>
+                            <div id="no-deadlines" class="text-center py-10 text-gray-500">
+                                <i class="fas fa-calendar-times text-3xl mb-2"></i>
+                                <p>No upcoming deadlines</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow p-6 card-hover">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Recent Activity</h3>
+                        <div id="recent-activity" class="divide-y">
+                            <!-- Activity will be loaded here -->
+                            <div class="text-center py-10 text-gray-500">
+                                <i class="fas fa-history text-3xl mb-2"></i>
+                                <p>No recent activity</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Projects -->
+                <div id="student-projects" class="content-section" style="display: none;">
+                    <div class="mb-6 flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-gray-800">My Projects</h2>
+                        <div class="flex items-center space-x-2">
+                            <select id="project-filter" class="p-2 border rounded">
+                                <option value="all">All Projects</option>
+                                <option value="ongoing">Ongoing</option>
+                                <option value="submitted">Submitted</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project Title</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Faculty</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deadline</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="project-list" class="bg-white divide-y divide-gray-200">
+                                <!-- Projects will be loaded here -->
+                                <tr>
+                                    <td colspan="5" class="px-6 py-10 text-center text-gray-500">
+                                        <i class="fas fa-inbox text-3xl mb-2"></i>
+                                        <p>No projects assigned</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Student Project Submission -->
+                <div id="student-submissions" class="content-section" style="display: none;">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Project Submissions</h2>
+                        <p class="text-gray-600">Submit your project work and track submission history</p>
+                    </div>
+                    <div id="submission-container">
+                        <div class="text-center py-10 text-gray-500">
+                            <i class="fas fa-info-circle text-3xl mb-2"></i>
+                            <p>Select a project to view and submit work</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Discussions -->
+                <div id="student-discussions" class="content-section" style="display: none;">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Project Discussions</h2>
+                        <p class="text-gray-600">Discuss your projects with faculty members</p>
+                    </div>
+                    <div id="discussions-container">
+                        <div class="text-center py-10 text-gray-500">
+                            <i class="fas fa-comments text-3xl mb-2"></i>
+                            <p>Select a project to view discussions</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Messages -->
+                <div id="student-messages" class="content-section" style="display: none;">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Messages</h2>
+                        <p class="text-gray-600">Communicate privately with faculty members</p>
+                    </div>
+                    <div class="bg-white rounded-lg shadow">
+                        <div class="text-center py-10 text-gray-500">
+                            <i class="fas fa-envelope-open-text text-3xl mb-2"></i>
+                            <p>No messages yet</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Calendar -->
+                <div id="student-calendar" class="content-section" style="display: none;">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Project Calendar</h2>
+                        <p class="text-gray-600">View your project deadlines and schedule</p>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div id="calendar" class="h-96"></div>
+                    </div>
+                </div>
+
+                <!-- Student Analytics -->
+                <div id="student-analytics" class="content-section" style="display: none;">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Performance Analytics</h2>
+                        <p class="text-gray-600">Track your project performance and progress</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Submission History</h3>
+                            <canvas id="submission-timeline"></canvas>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Grade Distribution</h3>
+                            <canvas id="grade-distribution"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Faculty Dashboard -->
+                <div id="faculty-dashboard" class="content-section" style="display: none;">
+                    <div class="mb-6 flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-gray-800">Faculty Dashboard</h2>
+                        <div class="text-sm text-gray-500">Welcome back, <span id="faculty-name" class="font-medium text-purple-600"></span></div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white rounded-lg shadow p-6 card-hover">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-sm text-gray-500">Total Projects</p>
+                                    <h3 class="text-3xl font-bold text-gray-800 mt-1" id="faculty-total-projects">0</h3>
+                                </div>
+                                <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                                    <i class="fas fa-project-diagram"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6 card-hover">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-sm text-gray-500">Ongoing</p>
+                                    <h3 class="text-3xl font-bold text-gray-800 mt-1" id="faculty-ongoing-projects">0</h3>
+                                </div>
+                                <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                                    <i class="fas fa-spinner"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6 card-hover">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-sm text-gray-500">Pending Review</p>
+                                    <h3 class="text-3xl font-bold text-gray-800 mt-1" id="faculty-pending-projects">0</h3>
+                                </div>
+                                <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6 card-hover">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-sm text-gray-500">Completed</p>
+                                    <h3 class="text-3xl font-bold text-gray-800 mt-1" id="faculty-completed-projects">0</h3>
+                                </div>
+                                <div class="p-3 rounded-full bg-green-100 text-green-600">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-white rounded-lg shadow p-6 lg:col-span-2 card-hover">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Project Distribution</h3>
+                            <div class="h-64">
+                                <canvas id="faculty-chart"></canvas>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6 card-hover">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Recent Submissions</h3>
+                            <div id="recent-submissions" class="space-y-3">
+                                <!-- Submissions will be loaded here -->
+                            </div>
+                            <div id="no-submissions" class="text-center py-10 text-gray-500">
+                                <i class="fas fa-inbox text-3xl mb-2"></i>
+                                <p>No recent submissions</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow p-6 card-hover">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Urgent Deadlines</h3>
+                        <div id="faculty-deadline-list" class="space-y-3">
+                            <!-- Deadlines will be loaded here -->
+                        </div>
+                        <div id="no-faculty-deadlines" class="text-center py-10 text-gray-500">
+                            <i class="fas fa-calendar-times text-3xl mb-2"></i>
+                            <p>No urgent deadlines</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Faculty Projects -->
+                <div id="faculty-projects" class="content-section" style="display: none;">
+                    <div class="mb-6 flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-gray-800">All Projects</h2>
+                        <div class="flex items-center space-x-2">
+                            <input type="text" id="project-search" placeholder="Search projects..." class="p-2 border rounded">
+                            <select id="faculty-project-filter" class="p-2 border rounded">
+                                <option value="all">All Projects</option>
+                                <option value="ongoing">Ongoing</option>
+                                <option value="pending">Pending Review</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project Title</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deadline</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="faculty-project-list" class="bg-white divide-y divide-gray-200">
+                                <!-- Projects will be loaded here -->
+                                <tr>
+                                    <td colspan="5" class="px-6 py-10 text-center text-gray-500">
+                                        <i class="fas fa-inbox text-3xl mb-2"></i>
+                                        <p>No projects created</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Faculty Students -->
+                <div id="faculty-students" class="content-section" style="display: none;">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Student Directory</h2>
+                        <p class="text-gray-600">View and manage students under your supervision</p>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Projects</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg. Grade</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">On Time %</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="student-directory" class="bg-white divide-y divide-gray-200">
+                                <!-- Students will be loaded here -->
+                                <tr>
+                                    <td colspan="5" class="px-6 py-10 text-center text-gray-500">
+                                        <i class="fas fa-user-graduate text-3xl mb-2"></i>
+                                        <p>No students assigned</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Faculty Create Project -->
+                <div id="faculty-create-project" class="content-section" style="display: none;">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Create New Project</h2>
+                        <p class="text-gray-600">Assign a new project to one or more students</p>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <form id="new-project-form">
+                                               <div class="mb-4">
+                                <label class="block text-gray-700 mb-2" for="project-title">Project Title</label>
+                                <input type="text" id="project-title" class="w-full p-2 border rounded" required>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 mb-2" for="project-description">Description</label>
+                                <textarea id="project-description" class="w-full p-2 border rounded h-32" required></textarea>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-gray-700 mb-2" for="project-deadline">Deadline</label>
+                                    <input type="date" id="project-deadline" class="w-full p-2 border rounded" required>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 mb-2" for="project-students">Assign To</label>
+                                    <select id="project-students" class="w-full p-2 border rounded" multiple>
+                                        <!-- Students will be loaded here -->
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 mb-2">Resources (Optional)</label>
+                                <div class="border-2 border-dashed rounded p-4 text-center">
+                                    <p class="text-sm text-gray-500 mb-2">Upload project resources (PDF, Docs, Images)</p>
+                                    <input type="file" id="project-files" class="hidden" multiple>
+                                    <button type="button" onclick="document.getElementById('project-files').click()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200">
+                                        <i class="fas fa-paperclip mr-2"></i>Select Files
+                                    </button>
+                                    <div id="file-list" class="mt-3 text-sm text-gray-600">
+                                        No files selected
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex justify-end mt-6">
+                                <button type="button" id="cancel-project" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 mr-2">Cancel</button>
+                                <button type="submit" class="px-4 py-2 gradient-bg text-white rounded hover:opacity-90">
+                                    <i class="fas fa-plus-circle mr-2"></i>Create Project
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Faculty Review Submissions -->
+                <div id="faculty-submissions" class="content-section" style="display: none;">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Review Submissions</h2>
+                        <p class="text-gray-600">Evaluate and provide feedback on student submissions</p>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted On</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="submission-list" class="bg-white divide-y divide-gray-200">
+                                <!-- Submissions will be loaded here -->
+                                <tr>
+                                    <td colspan="5" class="px-6 py-10 text-center text-gray-500">
+                                        <i class="fas fa-check-circle text-3xl mb-2"></i>
+                                        <p>No submissions to review</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Faculty Analytics -->
+                <div id="faculty-analytics" class="content-section" style="display: none;">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Project Analytics</h2>
+                        <p class="text-gray-600">Track and analyze project progress and performance</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Status Distribution</h3>
+                            <canvas id="faculty-status-chart"></canvas>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Timeline Completion</h3>
+                            <canvas id="faculty-timeline-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 gap-6">
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Student Performance</h3>
+                            <canvas id="faculty-performance-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Faculty Reports -->
+                <div id="faculty-reports" class="content-section" style="display: none;">
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Export Reports</h2>
+                        <p class="text-gray-600">Generate and download project reports</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="bg-white rounded-lg shadow p-6 card-hover">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Project Status Report</h3>
+                                    <p class="text-sm text-gray-600 mb-4">Summary of all projects with current status</p>
+                                </div>
+                                <div class="p-2 rounded-full bg-purple-100 text-purple-600">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                            </div>
+                            <button class="w-full mt-4 py-2 gradient-bg text-white rounded hover:opacity-90">
+                                <i class="fas fa-download mr-2"></i>Export as PDF
+                            </button>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6 card-hover">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Grade Report</h3>
+                                    <p class="text-sm text-gray-600 mb-4">Grades for all completed projects</p>
+                                </div>
+                                <div class="p-2 rounded-full bg-blue-100 text-blue-600">
+                                    <i class="fas fa-chart-bar"></i>
+                                </div>
+                            </div>
+                            <button class="w-full mt-4 py-2 gradient-bg text-white rounded hover:opacity-90">
+                                <i class="fas fa-download mr-2"></i>Export as Excel
+                            </button>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6 card-hover">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Student Performance</h3>
+                                    <p class="text-sm text-gray-600 mb-4">Detailed performance analysis by student</p>
+                                </div>
+                                <div class="p-2 rounded-full bg-green-100 text-green-600">
+                                    <i class="fas fa-user-graduate"></i>
+                                </div>
+                            </div>
+                            <button class="w-full mt-4 py-2 gradient-bg text-white rounded hover:opacity-90">
+                                <i class="fas fa-download mr-2"></i>Export as CSV
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Project Detail Modal -->
+    <div id="project-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto" style="display: none;">
+        <div class="bg-white rounded-lg p-6 w-full max-w-4xl max-h-screen overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-gray-800" id="modal-project-title">Project Title</h2>
+                <button id="close-project-modal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="mb-6">
+                <div class="flex items-center space-x-4 mb-2">
+                    <span class="px-3 py-1 rounded-full text-xs font-medium" id="modal-project-status">In Progress</span>
+                    <span class="text-sm text-gray-500" id="modal-project-deadline">Due: 2023-12-31</span>
+                </div>
+                <p class="text-gray-700" id="modal-project-description">Project description goes here.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Project Details</h3>
+                    <div class="space-y-2">
+                        <div>
+                            <span class="text-sm text-gray-500">Assigned To:</span>
+                            <p id="modal-project-student">John Doe</p>
+                        </div>
+                        <div>
+                            <span class="text-sm text-gray-500">Supervisor:</span>
+                            <p id="modal-project-faculty">Dr. Smith</p>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Resources</h3>
+                    <div id="modal-project-resources" class="space-y-2">
+                        <!-- Resources will be loaded here -->
+                        <p class="text-gray-500 italic">No resources provided</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="submission-tab-group">
+                <div class="flex border-b mb-6">
+                    <button class="submission-tab active px-4 py-2 font-medium text-purple-600 border-b-2 border-purple-600" data-tab="submissions">Submissions</button>
+                    <button class="submission-tab px-4 py-2 font-medium text-gray-500" data-tab="discussion">Discussion</button>
+                    <button class="submission-tab px-4 py-2 font-medium text-gray-500" data-tab="feedback">Feedback</button>
+                </div>
+                
+                <div id="submissions-tab" class="tab-content">
+                    <div id="submission-history" class="space-y-4">
+                        <h4 class="text-md font-semibold text-gray-800">Submission History</h4>
+                        <!-- Submission history will be loaded here -->
+                        <p class="text-gray-500 italic">No submissions yet</p>
+                    </div>
+                    
+                    <div id="student-submission-form" class="mt-6 border-t pt-6">
+                        <h4 class="text-md font-semibold text-gray-800 mb-4">Submit Your Work</h4>
+                        <form id="new-submission-form">
+                            <div class="mb-4">
+                                <input type="file" id="submission-files" class="hidden" multiple>
+                                <button type="button" onclick="document.getElementById('submission-files').click()" class="w-full border-2 border-dashed rounded p-4 text-center hover:bg-gray-50">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <i class="fas fa-file-upload text-3xl text-gray-400 mb-2"></i>
+                                        <p class="text-sm text-gray-500">Click to select files or drag and drop</p>
+                                        <p class="text-xs text-gray-400 mt-1">PDF, Word, ZIP, Images (Max 10MB)</p>
+                                    </div>
+                                </button>
+                                <div id="submission-file-list" class="mt-3 text-sm text-gray-600">
+                                    <p>No files selected</p>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 mb-2" for="submission-notes">Notes (Optional)</label>
+                                <textarea id="submission-notes" class="w-full p-2 border rounded h-24" placeholder="Add any additional notes for your submission..."></textarea>
+                            </div>
+                            <div class="flex justify-end">
+                                <button type="submit" class="px-4 py-2 gradient-bg text-white rounded hover:opacity-90">
+                                    <i class="fas fa-paper-plane mr-2"></i>Submit
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div id="faculty-feedback-form" class="mt-6 border-t pt-6" style="display: none;">
+                        <h4 class="text-md font-semibold text-gray-800 mb-4">Provide Feedback</h4>
+                        <form id="new-feedback-form">
+                            <div class="mb-4">
+                                <label class="block text-gray-700 mb-2" for="feedback-text">Comments</label>
+                                <textarea id="feedback-text" class="w-full p-2 border rounded h-24" placeholder="Enter your feedback..." required></textarea>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-gray-700 mb-2" for="feedback-grade">Grade (out of 100)</label>
+                                    <input type="number" id="feedback-grade" class="w-full p-2 border rounded" min="0" max="100" step="1">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 mb-2" for="feedback-status">Status</label>
+                                    <select id="feedback-status" class="w-full p-2 border rounded">
+                                        <option value="pending" selected>Pending Review</option>
+                                        <option value="approved">Approve</option>
+                                        <option value="rejected">Reject</option>
+                                        <option value="completed">Mark Complete</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="flex justify-end">
+                                <button type="submit" class="px-4 py-2 gradient-bg text-white rounded hover:opacity-90">
+                                    <i class="fas fa-check mr-2"></i>Submit Feedback
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div id="discussion-tab" class="tab-content" style="display: none;">
+                    <div class="space-y-4">
+                        <h4 class="text-md font-semibold text-gray-800">Project Discussion</h4>
+                        <div id="discussion-thread" class="space-y-4">
+                            <!-- Discussion messages will be loaded here -->
+                            <p class="text-gray-500 italic">No discussion yet. Start a conversation!</p>
+                        </div>
+                        <form id="new-comment-form" class="mt-6">
+                            <div class="flex space-x-2">
+                                <input type="text" id="comment-text" class="flex-1 p-2 border rounded" placeholder="Add a comment..." required>
+                                <button type="submit" class="px-4 gradient-bg text-white rounded hover:opacity-90">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div id="feedback-tab" class="tab-content" style="display: none;">
+                    <div id="feedback-content" class="space-y-4">
+                        <!-- Feedback will be loaded here -->
+                        <p class="text-gray-500 italic">No feedback yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Storage (Simulating a backend)
+        const database = {
+            users: [
+                { id: 1, username: 'student1', password: '1234', name: 'John Doe', role: 'student' },
+                { id: 2, username: 'student2', password: '1234', name: 'Jane Smith', role: 'student' },
+                { id: 3, username: 'faculty1', password: '1234', name: 'Dr. Adams', role: 'faculty' },
+                { id: 4, username: 'faculty2', password: '1234', name: 'Prof. Brown', role: 'faculty' }
+            ],
+            projects: [
+                { 
+                    id: 1, 
+                    title: 'Web Application Development', 
+                    description: 'Build a full-stack web application using modern technologies', 
+                    assigned_to: 1, 
+                    faculty_id: 3, 
+                    status: 'ongoing', 
+                    deadline: '2023-12-15',
+                    created_at: '2023-10-01'
+                },
+                { 
+                    id: 2, 
+                    title: 'Machine Learning Research', 
+                    description: 'Research paper on neural networks implementation', 
+                    assigned_to: 2, 
+                    faculty_id: 3, 
+                    status: 'submitted', 
+                    deadline: '2023-12-20',
+                    created_at: '2023-10-10'
+                },
+                { 
+                    id: 3, 
+                    title: 'Database Design Project', 
+                    description: 'Design and implement a relational database system', 
+                    assigned_to: 1, 
+                    faculty_id: 4, 
+                    status: 'completed', 
+                    deadline: '2023-11-30',
+                    created_at: '2023-09-15'
+                }
+            ],
+            submissions: [
+                { 
+                    id: 1, 
+                    project_id: 2, 
+                    file_path: ['research_proposal.pdf'], 
+                    submitted_on: '2023-11-15', 
+                    feedback: 'Good start, but needs more experimental results', 
+                    grade: 75,
+                    status: 'submitted',
+                    notes: 'First draft of the research paper'
+                },
+                { 
+                    id: 2, 
+                    project_id: 3, 
+                    file_path: ['database_design.pdf', 'schema.sql'], 
+                    submitted_on: '2023-11-29', 
+                    feedback: 'Excellent work. Well documented and implemented.', 
+                    grade: 95,
+                    status: 'completed',
+                    notes: 'Final submission with all requirements'
+                }
+            ],
+            comments: [
+                { 
+                    id: 1, 
+                    project_id: 2, 
+                    user_id: 3, 
+                    comment_text: 'How is your research coming along?', 
+                    timestamp: '2023-11-10T14:30:00Z' 
+                },
+                { 
+                    id: 2, 
+                    project_id: 2, 
+                    user_id: 2, 
+                    comment_text: 'Going well. Almost finished the literature review section.', 
+                    timestamp: '2023-11-11T09:15:00Z' 
+                }
+            ]
+        };
+
+        // Save data to localStorage if not already present
+        if (!localStorage.getItem('projectManagementDB')) {
+            localStorage.setItem('projectManagementDB', JSON.stringify(database));
+        }
+
+        // Helper function to get database
+        function getDB() {
+            return JSON.parse(localStorage.getItem('projectManagementDB'));
+        }
+
+        // Helper function to save database
+        function saveDB(db) {
+            localStorage.setItem('projectManagementDB', JSON.stringify(db));
+        }
+
+        // Date formatting helper
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString(undefined, options);
+        }
+
+        // Status badge styling
+        function getStatusBadge(status) {
+            const statusMap = {
+                'ongoing': { text: 'Ongoing', color: 'bg-blue-100 text-blue-800' },
+                'submitted': { text: 'Submitted', color: 'bg-yellow-100 text-yellow-800' },
+                'completed': { text: 'Completed', color: 'bg-green-100 text-green-800' }
+            };
+            const statusInfo = statusMap[status] || { text: status, color: 'bg-gray-100 text-gray-800' };
+            return `<span class="px-2 py-1 text-xs font-medium rounded-full ${statusInfo.color}">${statusInfo.text}</span>`;
+        }
+
+        // Initialize the application
+        let currentUser = null;
+
+        // DOM elements
+        const authModal = document.getElementById('auth-modal');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const appContainer = document.getElementById('app');
+        const loadingIndicator = document.getElementById('loading');
+        const currentUserElement = document.getElementById('current-user');
+        const userRoleElement = document.getElementById('user-role');
+        const studentMenu = document.getElementById('student-menu');
+        const facultyMenu = document.getElementById('faculty-menu');
+        const sidebarLinks = document.querySelectorAll('.sidebar-link');
+        const contentSections = document.querySelectorAll('.content-section');
+        const logoutBtn = document.getElementById('logout-btn');
+
+        // Event Listeners
+        document.getElementById('login-tab').addEventListener('click', () => {
+            document.getElementById('login-tab').classList.add('border-purple-600', 'text-purple-600');
+            document.getElementById('register-tab').classList.remove('border-purple-600', 'text-purple-600');
+            loginForm.style.display = 'block';
+            registerForm.style.display = 'none';
+        });
+
+        document.getElementById('register-tab').addEventListener('click', () => {
+            document.getElementById('register-tab').classList.add('border-purple-600', 'text-purple-600');
+            document.getElementById('login-tab').classList.remove('border-purple-600', 'text-purple-600');
+            loginForm.style.display = 'none';
+            registerForm.style.display = 'block';
+        });
+
+        document.getElementById('close-auth').addEventListener('click', () => {
+            authModal.style.display = 'none';
+        });
+
+        document.getElementById('login-btn').addEventListener('click', () => {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            const role = document.getElementById('login-role').value;
+            loginUser(username, password, role);
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', logoutUser);
+
+        document.getElementById('register-btn').addEventListener('click', () => {
+            const username = document.getElementById('register-username').value;
+            const password = document.getElementById('register-password').value;
+            const name = document.getElementById('register-name').value;
+            const role = document.getElementById('register-role').value;
+            registerUser(username, password, name, role);
+        });
+
+        // Sidebar navigation
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                // Remove active class from all links
+                sidebarLinks.forEach(l => l.classList.remove('active', 'text-purple-600'));
+                
+                // Add active class to clicked link
+                link.classList.add('active', 'text-purple-600');
+                
+                // Hide all content sections
+                contentSections.forEach(section => {
+                    section.style.display = 'none';
+                });
+                
+                // Show the selected section
+                const sectionId = link.getAttribute('data-section');
+                document.getElementById(sectionId).style.display = 'block';
+                
+                // Load data for the section
+                loadSectionData(sectionId);
+            });
+        });
+
+        // Authentication functions
+        function loginUser(username, password, role) {
+            showLoading();
+            const db = getDB();
+            const user = db.users.find(u => 
+                u.username === username && 
+                u.password === password && 
+                u.role === role
+            );
+
+            if (user) {
+                currentUser = user;
+                setTimeout(() => {
+                    hideLoading();
+                    authModal.style.display = 'none';
+                    appContainer.style.display = 'flex';
+                    initializeApp();
+                }, 1000);
+            } else {
+                hideLoading();
+                alert('Invalid username, password, or role');
+            }
+        }
+
+        function registerUser(username, password, name, role) {
+            showLoading();
+            const db = getDB();
+            
+            // Check if username already exists
+            if (db.users.some(u => u.username === username)) {
+                hideLoading();
+                alert('Username already exists');
+                return;
+            }
+            
+            // Create new user
+            const newUser = {
+                id: db.users.length + 1,
+                username,
+                password,
+                name,
+                role
+            };
+            
+            db.users.push(newUser);
+            saveDB(db);
+            
+            setTimeout(() => {
+                hideLoading();
+                alert('Registration successful! You can now login.');
+                document.getElementById('login-tab').click();
+                document.getElementById('login-username').value = username;
+                document.getElementById('login-password').value = password;
+                document.getElementById('login-role').value = role;
+            }, 1000);
+        }
+
+        function logoutUser() {
+            currentUser = null;
+            appContainer.style.display = 'none';
+            authModal.style.display = 'flex';
+            document.getElementById('login-form').style.display = 'block';
+            document.getElementById('register-form').style.display = 'none';
+            document.getElementById('login-username').value = '';
+            document.getElementById('login-password').value = '';
+        }
+
+        function showLoading() {
+            loadingIndicator.style.display = 'flex';
+        }
+
+        function hideLoading() {
+            loadingIndicator.style.display = 'none';
+        }
+
+        // Initialize the app after successful login
+        function initializeApp() {
+            // Set user info in header
+            currentUserElement.textContent = currentUser.name;
+            userRoleElement.textContent = currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1);
+            
+            // Show appropriate menu based on role
+            if (currentUser.role === 'student') {
+                studentMenu.style.display = 'block';
+                facultyMenu.style.display = 'none';
+                // Show student dashboard by default
+                document.getElementById('student-dashboard').style.display = 'block';
+                loadSectionData('student-dashboard');
+            } else {
+                studentMenu.style.display = 'none';
+                facultyMenu.style.display = 'block';
+                // Show faculty dashboard by default
+                document.getElementById('faculty-dashboard').style.display = 'block';
+                loadSectionData('faculty-dashboard');
+            }
+        }
+
+        // Load data for each section when clicked
+        function loadSectionData(sectionId) {
+            showLoading();
+            
+            setTimeout(() => {
+                const db = getDB();
+                
+                if (sectionId === 'student-dashboard') {
+                    loadStudentDashboard(db);
+                } else if (sectionId === 'student-projects') {
+                    loadStudentProjects(db);
+                } else if (sectionId === 'student-submissions') {
+                    loadStudentSubmissions(db);
+                } else if (sectionId === 'faculty-dashboard') {
+                    loadFacultyDashboard(db);
+                } else if (sectionId === 'faculty-projects') {
+                    loadFacultyProjects(db);
+                } else if (sectionId === 'faculty-submissions') {
+                    loadFacultySubmissions(db);
+                } else if (sectionId === 'faculty-students') {
+                    loadFacultyStudents(db);
+                } else if (sectionId === 'faculty-create-project') {
+                    loadFacultyCreateProject(db);
+                }
+                
+                hideLoading();
+            }, 500);
+        }
+
+        // Student Dashboard
+        function loadStudentDashboard(db) {
+            document.getElementById('student-name').textContent = currentUser.name;
+            
+            // Count projects by status
+            const studentProjects = db.projects.filter(p => p.assigned_to === currentUser.id);
+            const totalProjects = studentProjects.length;
+            const ongoingProjects = studentProjects.filter(p => p.status === 'ongoing').length;
+            const submittedProjects = studentProjects.filter(p => p.status === 'submitted').length;
+            const completedProjects = studentProjects.filter(p => p.status === 'completed').length;
+            
+            document.getElementById('total-projects').textContent = totalProjects;
+            document.getElementById('ongoing-projects').textContent = ongoingProjects;
+            document.getElementById('submitted-projects').textContent = submittedProjects;
+            document.getElementById('completed-projects').textContent = completedProjects;
+            
+            // Setup progress chart
+            const progressCtx = document.getElementById('progress-chart').getContext('2d');
+            new Chart(progressCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Completed', 'Submitted', 'Ongoing'],
+                    datasets: [{
+                        data: [completedProjects, submittedProjects, ongoingProjects],
+                        backgroundColor: ['#10B981', '#FBBF24', '#3B82F6'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+            
+            // Load upcoming deadlines (top 3)
+            const upcoming = studentProjects
+                .filter(p => p.status !== 'completed')
+                .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
+                .slice(0, 3);
+            
+            const deadlineList = document.getElementById('deadline-list');
+            const noDeadlines = document.getElementById('no-deadlines');
+            
+            if (upcoming.length > 0) {
+                noDeadlines.style.display = 'none';
+                deadlineList.innerHTML = '';
+                
+                upcoming.forEach(project => {
+                    const faculty = db.users.find(u => u.id === project.faculty_id);
+                    const daysLeft = Math.ceil((new Date(project.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+                    
+                    const deadlineItem = document.createElement('div');
+                    deadlineItem.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg';
+                    deadlineItem.innerHTML = `
+                        <div>
+                            <h4 class="font-medium text-gray-800">${project.title}</h4>
+                            <p class="text-sm text-gray-500">Supervisor: ${faculty.name}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-medium ${daysLeft <= 3 ? 'text-red-600' : 'text-gray-600'}">
+                                ${formatDate(project.deadline)}
+                            </p>
+                            <p class="text-xs ${daysLeft <= 3 ? 'text-red-500' : 'text-gray-500'}">
+                                ${daysLeft > 0 ? `${daysLeft} days left` : 'Due today'}
+                            </p>
+                        </div>
+                    `;
+                    deadlineList.appendChild(deadlineItem);
+                });
+            } else {
+                deadlineList.innerHTML = '';
+                noDeadlines.style.display = 'block';
+            }
+            
+            // Load recent activity (last 5)
+            let activities = [];
+            
+            // Projects assigned
+            studentProjects.slice(0, 3).forEach(p => {
+                activities.push({
+                    type: 'project',
+                    text: `Project "${p.title}" assigned`,
+                    date: p.created_at,
+                    icon: 'fa-project-diagram'
+                });
+            });
+            
+            // Submissions
+            db.submissions
+                .filter(s => studentProjects.some(p => p.id === s.project_id))
+                .slice(0, 2)
+                .forEach(s => {
+                    const project = studentProjects.find(p => p.id === s.project_id);
+                    activities.push({
+                        type: 'submission',
+                        text: `Submitted work for "${project.title}"`,
+                        date: s.submitted_on,
+                        icon: 'fa-file-upload'
+                    });
+                });
+            
+            // Sort by date
+            activities.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            const activityList = document.getElementById('recent-activity');
+            if (activities.length > 0) {
+                activityList.innerHTML = '';
+                
+                activities.forEach(act => {
+                    const activityItem = document.createElement('div');
+                    activityItem.className = 'py-3 flex items-start';
+                    activityItem.innerHTML = `
+                        <div class="p-2 rounded-full bg-purple-100 text-purple-600 mr-3">
+                            <i class="fas ${act.icon}"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-gray-800">${act.text}</p>
+                            <p class="text-xs text-gray-500">${formatDate(act.date)}</p>
+                        </div>
+                    `;
+                    activityList.appendChild(activityItem);
+                });
+            }
+        }
+
+        // Student Projects
+        function loadStudentProjects(db) {
+            const projects = db.projects.filter(p => p.assigned_to === currentUser.id);
+            const filter = document.getElementById('project-filter').value;
+            
+            let filteredProjects = projects;
+            if (filter !== 'all') {
+                filteredProjects = projects.filter(p => p.status === filter);
+            }
+            
+            const projectList = document.getElementById('project-list');
+            
+            if (filteredProjects.length > 0) {
+                projectList.innerHTML = '';
+                
+                filteredProjects.forEach(project => {
+                    const faculty = db.users.find(u => u.id === project.faculty_id);
+                    const daysLeft = Math.ceil((new Date(project.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+                    
+                    const projectRow = document.createElement('tr');
+                    projectRow.className = 'hover:bg-gray-50';
+                    projectRow.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">${project.title}</div>
+                                    <div class="text-sm text-gray-500">${project.description.substring(0, 50)}...</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">${faculty.name}</div>
+                            <div class="text-sm text-gray-500">${faculty.role}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            ${getStatusBadge(project.status)}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">${formatDate(project.deadline)}</div>
+                            <div class="text-sm text-gray-500 ${daysLeft <= 3 ? 'text-red-500' : ''}">
+                                ${daysLeft > 0 ? `${daysLeft} days left` : 'Due today'}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button class="text-purple-600 hover:text-purple-900 view-project" data-id="${project.id}">View</button>
+                        </td>
+                    `;
+                    projectList.appendChild(projectRow);
+                });
+                
+                // Add event listeners to view buttons
+                document.querySelectorAll('.view-project').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const projectId = parseInt(btn.getAttribute('data-id'));
+                        openProjectModal(projectId, db);
+                    });
+                });
+            }
+        }
+
+        // Student Submissions
+        function loadStudentSubmissions(db) {
+            const projects = db.projects.filter(p => p.assigned_to === currentUser.id);
+            const container = document.getElementById('submission-container');
+            
+            container.innerHTML = `
+                <div class="bg-white rounded-lg shadow">
+                    <div class="p-4 border-b">
+                        <h3 class="text-lg font-semibold text-gray-800">Select a Project to Submit Work</h3>
+                    </div>
+                    <div class="divide-y">
+                        ${projects.map(project => `
+                            <div class="p-4 hover:bg-gray-50 flex justify-between items-center">
+                                <div>
+                                    <h4 class="font-medium text-gray-800">${project.title}</h4>
+                                    <p class="text-sm text-gray-500">${getStatusBadge(project.status)} • Due: ${formatDate(project.deadline)}</p>
+                                </div>
+                                <button class="px-4 py-2 gradient-bg text-white rounded hover:opacity-90 submit-btn" data-id="${project.id}">
+                                    Submit Work
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            // Add event listeners to submission buttons
+            document.querySelectorAll('.submit-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const projectId = parseInt(btn.getAttribute('data-id'));
+                    openProjectModal(projectId, db, 'submissions');
+                });
+            });
+        }
+
+        // Faculty Dashboard
+        function loadFacultyDashboard(db) {
+            document.getElementById('faculty-name').textContent = currentUser.name;
+            
+            const facultyProjects = db.projects.filter(p => p.faculty_id === currentUser.id);
+            const totalProjects = facultyProjects.length;
+            const ongoingProjects = facultyProjects.filter(p => p.status === 'ongoing').length;
+            const pendingProjects = facultyProjects.filter(p => p.status === 'submitted').length;
+            const completedProjects = facultyProjects.filter(p => p.status === 'completed').length;
+            
+            document.getElementById('faculty-total-projects').textContent = totalProjects;
+            document.getElementById('faculty-ongoing-projects').textContent = ongoingProjects;
+            document.getElementById('faculty-pending-projects').textContent = pendingProjects;
+            document.getElementById('faculty-completed-projects').textContent = completedProjects;
+            
+            // Setup project distribution chart
+            const facultyCtx = document.getElementById('faculty-chart').getContext('2d');
+            new Chart(facultyCtx, {
+                type: 'bar',
+                data: {
+                    labels: facultyProjects.map(p => p.title.substring(0, 15) + (p.title.length > 15 ? '...' : '')),
+                    datasets: [{
+                        label: 'Days Until Deadline',
+                        data: facultyProjects.map(p => Math.ceil((new Date(p.deadline) - new Date()) / (1000 * 60 * 60 * 24))),
+                        backgroundColor: facultyProjects.map(p => {
+                            const daysLeft = Math.ceil((new Date(p.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+                            return daysLeft <= 3 ? '#EF4444' : (daysLeft <= 7 ? '#FBBF24' : '#3B82F6');
+                        }),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Days Left'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+            
+            // Load recent submissions (last 5)
+            const recentSubmissions = db.submissions
+                .filter(s => facultyProjects.some(p => p.id === s.project_id))
+                .sort((a, b) => new Date(b.submitted_on) - new Date(a.submitted_on))
+                .slice(0, 5);
+            
+            const submissionsList = document.getElementById('recent-submissions');
+            const noSubmissions = document.getElementById('no-submissions');
+            
+            if (recentSubmissions.length > 0) {
+                noSubmissions.style.display = 'none';
+                submissionsList.innerHTML = '';
+                
+                recentSubmissions.forEach(sub => {
+                    const project = db.projects.find(p => p.id === sub.project_id);
+                    const student = db.users.find(u => u.id === project.assigned_to);
+                    
+                    const subItem = document.createElement('div');
+                    subItem.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg';
+                    subItem.innerHTML = `
+                        <div>
+                            <h4 class="font-medium text-gray-800">${project.title}</h4>
+                            <p class="text-sm text-gray-500">${student.name} • ${formatDate(sub.submitted_on)}</p>
+                        </div>
+                        <button class="px-3 py-1 bg-purple-100 text-purple-600 rounded-full text-sm view-feedback" data-id="${sub.id}">
+                            Review
+                        </button>
+                    `;
+                    submissionsList.appendChild(subItem);
+                });
+                
+                // Add event listeners to view buttons
+                document.querySelectorAll('.view-feedback').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const submissionId = parseInt(btn.getAttribute('data-id'));
+                        const submission = db.submissions.find(s => s.id === submissionId);
+                        const project = db.projects.find(p => p.id === submission.project_id);
+                        openProjectModal(project.id, db, 'feedback');
+                    });
+                });
+            } else {
+                submissionsList.innerHTML = '';
+                noSubmissions.style.display = 'block';
+            }
+            
+            // Load urgent deadlines (top 3)
+            const urgentDeadlines = facultyProjects
+                .filter(p => p.status !== 'completed')
+                .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
+                .slice(0, 3);
+            
+            const deadlineList = document.getElementById('faculty-deadline-list');
+            const noDeadlines = document.getElementById('no-faculty-deadlines');
+            
+            if (urgentDeadlines.length > 0) {
+                noDeadlines.style.display = 'none';
+                deadlineList.innerHTML = '';
+                
+                urgentDeadlines.forEach(project => {
+                    const student = db.users.find(u => u.id === project.assigned_to);
+                    const daysLeft = Math.ceil((new Date(project.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+                    
+                    const deadlineItem = document.createElement('div');
+                    deadlineItem.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg';
+                    deadlineItem.innerHTML = `
+                        <div>
+                            <h4 class="font-medium text-gray-800">${project.title}</h4>
+                            <p class="text-sm text-gray-500">Student: ${student.name}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-medium ${daysLeft <= 3 ? 'text-red-600' : 'text-gray-600'}">
+                                ${formatDate(project.deadline)}
+                            </p>
+                            <p class="text-xs ${daysLeft <= 3 ? 'text-red-500' : 'text-gray-500'}">
+                                ${daysLeft > 0 ? `${daysLeft} days left` : 'Due today'}
+                            </p>
+                        </div>
+                    `;
+                    deadlineList.appendChild(deadlineItem);
+                });
+            } else {
+                deadlineList.innerHTML = '';
+                noDeadlines.style.display = 'block';
+            }
+        }
+
+        // Faculty Projects
+        function loadFacultyProjects(db) {
+            const projects = db.projects.filter(p => p.faculty_id === currentUser.id);
+            const filter = document.getElementById('faculty-project-filter').value;
+            const search = document.getElementById('project-search').value.toLowerCase();
+            
+            let filteredProjects = projects;
+            
+            // Apply status filter
+            if (filter !== 'all') {
+                filteredProjects = projects.filter(p => p.status === filter);
+            }
+            
+            // Apply search filter
+            if (search) {
+                filteredProjects = filteredProjects.filter(p => 
+                    p.title.toLowerCase().includes(search) || 
+                    p.description.toLowerCase().includes(search)
+                );
+            }
+            
+            const projectList = document.getElementById('faculty-project-list');
+            
+            if (filteredProjects.length > 0) {
+                projectList.innerHTML = '';
+                
+                filteredProjects.forEach(project => {
+                    const student = db.users.find(u => u.id === project.assigned_to);
+                    const daysLeft = Math.ceil((new Date(project.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+                    
+                    const projectRow = document.createElement('tr');
+                    projectRow.className = 'hover:bg-gray-50';
+                    projectRow.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">${project.title}</div>
+                                    <div class="text-sm text-gray-500">${project.description.substring(0, 50)}...</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">${student.name}</div>
+                            <div class="text-sm text-gray-500">Student</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            ${getStatusBadge(project.status)}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">${formatDate(project.deadline)}</div>
+                            <div class="text-sm text-gray-500 ${daysLeft <= 3 ? 'text-red-500' : ''}">
+                                ${daysLeft > 0 ? `${daysLeft} days left` : 'Due today'}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button class="text-purple-600 hover:text-purple-900 view-project" data-id="${project.id}">View</button>
+                        </td>
+                    `;
+                    projectList.appendChild(projectRow);
+                });
+                
+                // Add event listeners to view buttons
+                document.querySelectorAll('.view-project').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const projectId = parseInt(btn.getAttribute('data-id'));
+                        openProjectModal(projectId, db);
+                    });
+                });
+            } else {
+                projectList.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-10 text-center text-gray-500">
+                            <i class="fas fa-inbox text-3xl mb-2"></i>
+                            <p>No projects found</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Faculty Submissions
+        function loadFacultySubmissions(db) {
+            const projects = db.projects.filter(p => p.faculty_id === currentUser.id);
+            const submissions = db.submissions.filter(s => projects.some(p => p.id === s.project_id));
+            const pendingSubmissions = submissions.filter(s => s.status === 'submitted');
+            
+            const submissionList = document.getElementById('submission-list');
+            
+            if (pendingSubmissions.length > 0) {
+                submissionList.innerHTML = '';
+                
+                pendingSubmissions.forEach(sub => {
+                    const project = projects.find(p => p.id === sub.project_id);
+                    const student = db.users.find(u => u.id === project.assigned_to);
+                    
+                    const submissionRow = document.createElement('tr');
+                    submissionRow.className = 'hover:bg-gray-50';
+                    submissionRow.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">${project.title}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">${student.name}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">${formatDate(sub.submitted_on)}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            ${getStatusBadge(sub.status)}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button class="text-purple-600 hover:text-purple-900 view-feedback" data-id="${sub.id}">Review</button>
+                        </td>
+                    `;
+                    submissionList.appendChild(submissionRow);
+                });
+                
+                // Add event listeners to view buttons
+                document.querySelectorAll('.view-feedback').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const submissionId = parseInt(btn.getAttribute('data-id'));
+                        const submission = submissions.find(s => s.id === submissionId);
+                        const project = projects.find(p => p.id === submission.project_id);
+                        openProjectModal(project.id, db, 'feedback');
+                    });
+                });
+            } else {
+                submissionList.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-10 text-center text-gray-500">
+                            <i class="fas fa-check-circle text-3xl mb-2"></i>
+                            <p>No submissions to review</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Faculty Students
+        function loadFacultyStudents(db) {
+            const projects = db.projects.filter(p => p.faculty_id === currentUser.id);
+            const studentIds = [...new Set(projects.map(p => p.assigned_to))];
+            const students = db.users.filter(u => u.role === 'student' && studentIds.includes(u.id));
+            
+            // Calculate stats for each student
+            const studentsWithStats = students.map(student => {
+                const studentProjects = projects.filter(p => p.assigned_to === student.id);
+                const completedProjects = studentProjects.filter(p => p.status === 'completed');
+                const submissions = db.submissions.filter(s => 
+                    studentProjects.some(p => p.id === s.project_id)
+                );
+                
+                const onTimeProjects = completedProjects.filter(p => {
+                    const submission = submissions.find(s => s.project_id === p.id);
+                    return submission && new Date(submission.submitted_on) <= new Date(p.deadline);
+                }).length;
+                
+                const totalGrades = submissions.reduce((sum, sub) => sum + (sub.grade || 0), 0);
+                const avgGrade = submissions.length > 0 ? (totalGrades / submissions.length).toFixed(1) : 'N/A';
+                
+                return {
+                    ...student,
+                    projectCount: studentProjects.length,
+                    completedCount: completedProjects.length,
+                    onTimePercentage: completedProjects.length > 0 ? 
+                        Math.round((onTimeProjects / completedProjects.length) * 100) : 0,
+                    avgGrade
+                };
+            });
+            
+            const studentDirectory = document.getElementById('student-directory');
+            
+            if (studentsWithStats.length > 0) {
+                studentDirectory.innerHTML = '';
+                
+                studentsWithStats.forEach(student => {
+                    const studentRow = document.createElement('tr');
+                    studentRow.className = 'hover:bg-gray-50';
+                    studentRow.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">${student.name}</div>
+                                    <div class="text-sm text-gray-500">${student.username}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">${student.projectCount}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">${student.avgGrade}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div class="bg-green-600 h-2.5 rounded-full" style="width: ${student.onTimePercentage}%"></div>
+                                </div>
+                                <span class="ml-2 text-sm text-gray-500">${student.onTimePercentage}%</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button class="text-purple-600 hover:text-purple-900 view-student" data-id="${student.id}">View</button>
+                        </td>
+                    `;
+                    studentDirectory.appendChild(studentRow);
+                });
+                
+                // Add event listeners to view buttons
+                document.querySelectorAll('.view-student').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const studentId = parseInt(btn.getAttribute('data-id'));
+                        viewStudentProfile(studentId, db);
+                    });
+                });
+            } else {
+                studentDirectory.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-10 text-center text-gray-500">
+                            <i class="fas fa-user-graduate text-3xl mb-2"></i>
+                            <p>No students assigned</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Faculty Create Project
+        function loadFacultyCreateProject(db) {
+            const students = db.users.filter(u => u.role === 'student');
+            const studentSelect = document.getElementById('project-students');
+            
+            // Populate student dropdown
+            studentSelect.innerHTML = '';
+            students.forEach(student => {
+                const option = document.createElement('option');
+                option.value = student.id;
+                option.textContent = student.name;
+                studentSelect.appendChild(option);
+            });
+            
+            // Form submission
+            document.getElementById('new-project-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const title = document.getElementById('project-title').value;
+                const description = document.getElementById('project-description').value;
+                const deadline = document.getElementById('project-deadline').value;
+                const studentId = document.getElementById('project-students').value;
+                
+                // Create new project
+                const db = getDB();
+                const newProject = {
+                    id: db.projects.length + 1,
+                    title,
+                    description,
+                    assigned_to: parseInt(studentId),
+                    faculty_id: currentUser.id,
+                    status: 'ongoing',
+                    deadline,
+                    created_at: new Date().toISOString().split('T')[0]
+                };
+                
+                db.projects.push(newProject);
+                saveDB(db);
+                
+                alert('Project created successfully!');
+                document.getElementById('new-project-form').reset();
+                document.getElementById('file-list').innerHTML = 'No files selected';
+                
+                // Show in faculty projects list
+                loadFacultyProjects(db);
+                document.getElementById('faculty-projects-tab').click();
+            });
+            
+            // File selection
+            document.getElementById('project-files').addEventListener('change', (e) => {
+                const files = e.target.files;
+                const fileList = document.getElementById('file-list');
+                
+                if (files.length > 0) {
+                    fileList.innerHTML = '';
+                    for (let i = 0; i < files.length; i++) {
+                        const fileItem = document.createElement('div');
+                        fileItem.className = 'flex items-center justify-between py-1';
+                        fileItem.innerHTML = `
+                            <span class="text-sm truncate">${files[i].name}</span>
+                            <span class="text-xs text-gray-500">${(files[i].size / 1024).toFixed(1)}KB</span>
+                        `;
+                        fileList.appendChild(fileItem);
+                    }
+                } else {
+                    fileList.innerHTML = 'No files selected';
+                }
+            });
+        }
+
+        // Project Modal
+        function openProjectModal(projectId, db, defaultTab = 'submissions') {
+            const project = db.projects.find(p => p.id === projectId);
+            const student = db.users.find(u => u.id === project.assigned_to);
+            const faculty = db.users.find(u => u.id === project.faculty_id);
+            
+            // Set basic project info
+            document.getElementById('modal-project-title').textContent = project.title;
+            document.getElementById('modal-project-description').textContent = project.description;
+            document.getElementById('modal-project-status').textContent = getStatusBadge(project.status);
+            document.getElementById('modal-project-deadline').textContent = `Due: ${formatDate(project.deadline)}`;
+            document.getElementById('modal-project-student').textContent = student.name;
+            document.getElementById('modal-project-faculty').textContent = faculty.name;
+            
+            // Show/hide student and faculty sections
+            const isFaculty = currentUser.role === 'faculty';
+            document.getElementById('student-submission-form').style.display = isFaculty ? 'none' : 'block';
+            document.getElementById('faculty-feedback-form').style.display = isFaculty ? 'block' : 'none';
+            
+            // Load submissions
+            const projectSubmissions = db.submissions.filter(s => s.project_id === project.id);
+            const submissionHistory = document.getElementById('submission-history');
+            
+            if (projectSubmissions.length > 0) {
+                submissionHistory.innerHTML = `
+                    <h4 class="text-md font-semibold text-gray-800 mb-2">Submission History</h4>
+                    ${projectSubmissions.map(sub => `
+                        <div class="border rounded-lg p-4 mb-3">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <span class="text-sm font-medium">${formatDate(sub.submitted_on)}</span>
+                                    ${sub.status === 'completed' && sub.grade ? 
+                                        `<span class="ml-2 px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">
+                                            Grade: ${sub.grade}/100
+                                        </span>` : ''}
+                                </div>
+                                ${getStatusBadge(sub.status)}
+                            </div>
+                            <div class="mb-2">
+                                <p class="text-sm text-gray-700">${sub.notes || 'No notes provided'}</p>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                ${sub.file_path.map(file => `
+                                    <span class="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded flex items-center">
+                                        <i class="fas fa-file me-1"></i> ${file}
+                                    </span>
+                                `).join('')}
+                            </div>
+                            ${sub.feedback ? `
+                                <div class="mt-3 pt-3 border-t">
+                                    <h5 class="text-sm font-medium text-gray-800 mb-1">Faculty Feedback</h5>
+                                    <p class="text-sm text-gray-700">${sub.feedback}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                `;
+            } else {
+                submissionHistory.innerHTML = '<p class="text-gray-500 italic">No submissions yet</p>';
+            }
+            
+            // Load discussion
+            const projectComments = db.comments.filter(c => c.project_id === project.id);
+            const discussionThread = document.getElementById('discussion-thread');
+            
+            if (projectComments.length > 0) {
+                discussionThread.innerHTML = projectComments.map(comment => {
+                    const user = db.users.find(u => u.id === comment.user_id);
+                    return `
+                        <div class="flex space-x-3">
+                            <div class="flex-shrink-0">
+                                <div class="h-8 w-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="bg-gray-100 rounded-lg p-3">
+                                    <div class="flex items-center space-x-2 mb-1">
+                                        <span class="text-sm font-medium">${user.name}</span>
+                                        <span class="text-xs text-gray-500">${formatDate(comment.timestamp)}</span>
+                                    </div>
+                                    <p class="text-sm text-gray-800">${comment.comment_text}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                discussionThread.innerHTML = '<p class="text-gray-500 italic">No discussion yet. Start a conversation!</p>';
+            }
+            
+            // Set active tab
+            document.querySelectorAll('.submission-tab').forEach(tab => {
+                tab.classList.remove('border-purple-600', 'text-purple-600');
+                tab.classList.add('text-gray-500');
+            });
+            
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            
+            const activeTab = document.querySelector(`.submission-tab[data-tab="${defaultTab}"]`);
+            const activeContent = document.getElementById(`${defaultTab}-tab`);
+            
+            activeTab.classList.add('border-purple-600', 'text-purple-600');
+            activeContent.style.display = 'block';
+            
+            // Tab switching
+            document.querySelectorAll('.submission-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabName = tab.getAttribute('data-tab');
+                    
+                    document.querySelectorAll('.submission-tab').forEach(t => {
+                        t.classList.remove('border-purple-600', 'text-purple-600');
+                        t.classList.add('text-gray-500');
+                    });
+                    
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.style.display = 'none';
+                    });
+                    
+                    tab.classList.add('border-purple-600', 'text-purple-600');
+                    document.getElementById(`${tabName}-tab`).style.display = 'block';
+                });
+            });
+            
+            // Comment form
+            document.getElementById('new-comment-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const commentText = document.getElementById('comment-text').value;
+                if (!commentText.trim()) return;
+                
+                const db = getDB();
+                const newComment = {
+                    id: db.comments.length + 1,
+                    project_id: project.id,
+                    user_id: currentUser.id,
+                    comment_text: commentText,
+                    timestamp: new Date().toISOString()
+                };
+                
+                db.comments.push(newComment);
+                saveDB(db);
+                
+                // Reload discussion
+                document.getElementById('comment-text').value = '';
+                loadSectionData(document.getElementById('student-discussions').style.display === 'block' ? 'student-discussions' : 'faculty-dashboard');
+                openProjectModal(projectId, db, 'discussion');
+            });
+            
+            // Submission form
+            document.getElementById('new-submission-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const files = document.getElementById('submission-files').files;
+                const notes = document.getElementById('submission-notes').value;
+                
+                if (files.length === 0) {
+                    alert('Please select at least one file to submit');
+                    return;
+                }
+                
+                const db = getDB();
+                const newSubmission = {
+                    id: db.submissions.length + 1,
+                    project_id: project.id,
+                    file_path: Array.from(files).map(f => f.name),
+                    submitted_on: new Date().toISOString().split('T')[0],
+                    feedback: '',
+                    grade: null,
+                    status: 'submitted',
+                    notes
+                };
+                
+                db.submissions.push(newSubmission);
+                
+                // Update project status
+                const projectIndex = db.projects.findIndex(p => p.id === project.id);
+                if (projectIndex !== -1) {
+                    db.projects[projectIndex].status = 'submitted';
+                }
+                
+                saveDB(db);
+                
+                alert('Work submitted successfully!');
+                document.getElementById('new-submission-form').reset();
+                document.getElementById('submission-file-list').innerHTML = 'No files selected';
+                
+                // Reload modal with updated data
+                openProjectModal(projectId, getDB());
+            });
+            
+            // File selection for submission
+            document.getElementById('submission-files').addEventListener('change', (e) => {
+                const files = e.target.files;
+                const fileList = document.getElementById('submission-file-list');
+                
+                if (files.length > 0) {
+                    fileList.innerHTML = '';
+                    for (let i = 0; i < files.length; i++) {
+                        const fileItem = document.createElement('div');
+                        fileItem.className = 'flex items-center justify-between py-1';
+                        fileItem.innerHTML = `
+                            <span class="text-sm truncate">${files[i].name}</span>
+                            <span class="text-xs text-gray-500">${(files[i].size / 1024).toFixed(1)}KB</span>
+                        `;
+                        fileList.appendChild(fileItem);
+                    }
+                } else {
+                    fileList.innerHTML = 'No files selected';
+                }
+            });
+            
+            // Feedback form
+            document.getElementById('new-feedback-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const feedbackText = document.getElementById('feedback-text').value;
+                const grade = document.getElementById('feedback-grade').value;
+                const status = document.getElementById('feedback-status').value;
+                
+                if (!feedbackText.trim()) {
+                    alert('Please provide feedback comments');
+                    return;
+                }
+                
+                const db = getDB();
+                const lastSubmission = db.submissions
+                    .filter(s => s.project_id === project.id)
+                    .sort((a, b) => new Date(b.submitted_on) - new Date(a.submitted_on))[0];
+                
+                if (!lastSubmission) {
+                    alert('No submission found to provide feedback for');
+                    return;
+                }
+                
+                // Update submission
+                const submissionIndex = db.submissions.findIndex(s => s.id === lastSubmission.id);
+                if (submissionIndex !== -1) {
+                    db.submissions[submissionIndex].feedback = feedbackText;
+                    db.submissions[submissionIndex].grade = grade ? parseInt(grade) : null;
+                    db.submissions[submissionIndex].status = status;
+                }
+                
+                // Update project status
+                const projectIndex = db.projects.findIndex(p => p.id === project.id);
+                if (projectIndex !== -1) {
+                    db.projects[projectIndex].status = status;
+                }
+                
+                saveDB(db);
+                
+                alert('Feedback submitted successfully!');
+                document.getElementById('new-feedback-form').reset();
+                
+                // Reload modal with updated data
+                openProjectModal(projectId, getDB(), 'feedback');
+            });
+            
+            // Show modal
+            document.getElementById('project-modal').style.display = 'flex';
+            document.getElementById('close-project-modal').addEventListener('click', () => {
+                document.getElementById('project-modal').style.display = 'none';
+                
+                // Reload the current section to reflect any changes
+                if (currentUser.role === 'student') {
+                    if (document.getElementById('student-projects').style.display === 'block') {
+                        loadStudentProjects(db);
+                    } else if (                        document.getElementById('submission-list').style.display === 'block') {
+                        loadStudentSubmissions(db);
+                    }
+                } else {
+                    if (document.getElementById('faculty-projects').style.display === 'block') {
+                        loadFacultyProjects(db);
+                    } else if (document.getElementById('faculty-submissions').style.display === 'block') {
+                        loadFacultySubmissions(db);
+                    }
+                }
+            });
+        }
+
+        // View Student Profile
+        function viewStudentProfile(studentId, db) {
+            const student = db.users.find(u => u.id === studentId);
+            const projects = db.projects.filter(p => p.assigned_to === student.id);
+            const submissions = db.submissions.filter(s => 
+                projects.some(p => p.id === s.project_id)
+            );
+
+            // Calculate stats
+            const completedProjects = projects.filter(p => p.status === 'completed');
+            const onTimeSubmissions = completedProjects.filter(p => {
+                const submission = submissions.find(s => s.project_id === p.id);
+                return submission && new Date(submission.submitted_on) <= new Date(p.deadline);
+            }).length;
+
+            const totalGrades = submissions.reduce((sum, sub) => sum + (sub.grade || 0), 0);
+            const avgGrade = submissions.length > 0 ? (totalGrades / submissions.length).toFixed(1) : 'N/A';
+
+            // Create modal content
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg p-6 w-full max-w-2xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Student Profile: ${student.name}</h2>
+                        <button class="close-student-modal text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-500">Username</p>
+                            <p class="font-medium">${student.username}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-500">Projects</p>
+                            <p class="font-medium">${projects.length} (${completedProjects.length} completed)</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-500">Average Grade</p>
+                            <p class="font-medium">${avgGrade}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">Performance Overview</h3>
+                        <canvas id="student-performance-chart" height="150"></canvas>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">Recent Projects</h3>
+                        <div class="space-y-3">
+                            ${projects.slice(0, 3).map(project => {
+                                const submission = submissions.find(s => s.project_id === project.id);
+                                return `
+                                    <div class="border rounded-lg p-3 flex justify-between items-center">
+                                        <div>
+                                            <h4 class="font-medium">${project.title}</h4>
+                                            <p class="text-sm text-gray-500">${formatDate(project.deadline)} • ${getStatusBadge(project.status)}</p>
+                                        </div>
+                                        ${submission && submission.grade ? `
+                                            <div class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                                                Grade: ${submission.grade}/100
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            // Close modal
+            modal.querySelector('.close-student-modal').addEventListener('click', () => {
+                document.body.removeChild(modal);
+            });
+
+            // Setup performance chart
+            const ctx = modal.querySelector('#student-performance-chart').getContext('2d');
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Completion Rate', 'On Time %', 'Avg Grade', 'Participation', 'Quality'],
+                    datasets: [{
+                        label: 'Performance',
+                        data: [
+                            projects.length > 0 ? Math.round((completedProjects.length / projects.length) * 100) : 0,
+                            completedProjects.length > 0 ? Math.round((onTimeSubmissions / completedProjects.length) * 100) : 0,
+                            avgGrade === 'N/A' ? 0 : avgGrade,
+                            80, // Dummy data for demonstration
+                            75  // Dummy data for demonstration
+                        ],
+                        backgroundColor: 'rgba(79, 70, 229, 0.2)',
+                        borderColor: 'rgba(79, 70, 229, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        r: {
+                            angleLines: {
+                                display: true
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize the auth modal when page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            authModal.style.display = 'flex';
+            
+            // Check for demo mode in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('demo')) {
+                document.getElementById('register-tab').click();
+            }
+        });
+    </script>
+</body>
+</html>
